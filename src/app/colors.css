@@ -1,0 +1,69 @@
+:root {
+  /* Brand Colors */
+  --primary: #4f46e5;
+  --primary-hover: #4338ca;
+  --primary-light: #e0e7ff;
+  
+  /* Backgrounds & Cards */
+  --background: #f8fafc;
+  --background-end: #f1f5f9;
+  --card-bg: rgba(255, 255, 255, 0.85);
+  --card-border: rgba(226, 232, 240, 0.8);
+  
+  /* Typography */
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --text-inverse: #ffffff;
+  
+  /* Inputs */
+  --input-bg: #ffffff;
+  --input-border: #cbd5e1;
+  --input-focus: #4f46e5;
+  
+  /* Accents */
+  --accent-success: #10b981;
+  --accent-danger: #ef4444;
+  --accent-info: #0ea5e9;
+  
+  /* Decorative Assets */
+  --chart-gradient-start: rgba(79, 70, 229, 0.2);
+  --chart-gradient-end: rgba(79, 70, 229, 0);
+  --visual-card-bg: rgba(255, 255, 255, 0.7);
+  --visual-card-border: rgba(255, 255, 255, 0.6);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Brand Colors */
+    --primary: #6366f1;
+    --primary-hover: #4f46e5;
+    --primary-light: #1e1b4b;
+    
+    /* Backgrounds & Cards */
+    --background: #030712;
+    --background-end: #0b0f19;
+    --card-bg: rgba(17, 24, 39, 0.75);
+    --card-border: rgba(31, 41, 55, 0.6);
+    
+    /* Typography */
+    --text-main: #f9fafb;
+    --text-muted: #9ca3af;
+    --text-inverse: #030712;
+    
+    /* Inputs */
+    --input-bg: #111827;
+    --input-border: #374151;
+    --input-focus: #6366f1;
+    
+    /* Accents */
+    --accent-success: #34d399;
+    --accent-danger: #f87171;
+    --accent-info: #38bdf8;
+    
+    /* Decorative Assets */
+    --chart-gradient-start: rgba(99, 102, 241, 0.2);
+    --chart-gradient-end: rgba(99, 102, 241, 0);
+    --visual-card-bg: rgba(31, 41, 55, 0.65);
+    --visual-card-border: rgba(75, 85, 99, 0.3);
+  }
+}
