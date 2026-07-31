@@ -20,7 +20,7 @@ export default function Login() {
       {/* القسم الأيمن: نموذج تسجيل الدخول */}
       <section className="w-full lg:w-[450px] xl:w-[500px] bg-card-bg border-e border-card-border backdrop-blur-xl flex flex-col justify-between p-8 sm:p-12 relative z-10 shadow-2xl">
 
-        <div className="my-auto pb-8">
+        <div className="my-auto">
           <div className="space-y-2 mb-8 text-start">
             <h1 className="font-sans font-extrabold flex justify-between w-full items-center text-3xl text-text-main tracking-tight">
               تسجيل الدخول<img src="/logo.png" className="w-24" alt="" />
