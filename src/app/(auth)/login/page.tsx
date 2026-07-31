@@ -18,9 +18,9 @@ export default function Login() {
       <div className="absolute bottom-[-10%] start-[-10%] w-[500px] h-[500px] bg-accent-info/10 rounded-full blur-[120px] pointer-events-none select-none" />
 
       {/* القسم الأيمن: نموذج تسجيل الدخول */}
-      <section className="w-full lg:w-[450px] xl:w-[500px] bg-card-bg border-e border-card-border backdrop-blur-xl flex flex-col justify-between p-8 sm:p-12 relative z-10 shadow-2xl">
+      <section className="w-full lg:w-[450px] xl:w-[500px] bg-card-bg border-e border-card-border backdrop-blur-xl flex flex-col justify-center p-8 sm:p-12 relative z-10 shadow-2xl">
 
-        <div className="my-auto">
+        <div className="my-6">
           <div className="space-y-2 mb-8 text-start">
             <h1 className="font-sans font-extrabold flex justify-between w-full items-center text-3xl text-text-main tracking-tight">
               تسجيل الدخول<img src="/logo.png" className="w-24" alt="" />
