@@ -1,7 +1,7 @@
 :root {
   /* Brand Colors */
-  --primary: #4f46e5;
-  --primary-hover: #4338ca;
+  --primary: #1c1f29;
+  --primary-hover: #12151c;
   --primary-light: #e0e7ff;
   
   /* Backgrounds & Cards */
@@ -12,7 +12,7 @@
   
   /* Typography */
   --text-main: #0f172a;
-  --text-muted: #64748b;
+  --text-muted: #333333;
   --text-inverse: #ffffff;
   
   /* Inputs */
@@ -35,9 +35,9 @@
 @media (prefers-color-scheme: dark) {
   :root {
     /* Brand Colors */
-    --primary: #6366f1;
-    --primary-hover: #4f46e5;
-    --primary-light: #1e1b4b;
+    --primary: #1c1f29;
+    --primary-hover: #12151c;
+    --primary-light: #2a2e3d;
     
     /* Backgrounds & Cards */
     --background: #030712;
