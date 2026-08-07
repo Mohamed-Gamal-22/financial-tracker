@@ -7,8 +7,21 @@ import { parseLoginData } from "@/services/auth/parse-login";
 
 const isProd = process.env.NODE_ENV === "production";
 
-if (!process.env.NEXTAUTH_SECRET) {
-  throw new Error("NEXTAUTH_SECRET is missing. Add it to your environment.");
+/**
+ * NextAuth secret. During `next build` Vercel may evaluate this module without
+ * env vars yet — don't crash the build. Fail clearly at request time instead.
+ */
+function getAuthSecret() {
+  const secret = process.env.NEXTAUTH_SECRET;
+  if (secret) return secret;
+
+  if (process.env.NEXT_PHASE === "phase-production-build") {
+    return "build-time-placeholder";
+  }
+
+  throw new Error(
+    "NEXTAUTH_SECRET is missing. Add it in Vercel → Settings → Environment Variables (and in .env.local locally).",
+  );
 }
 
 export const authOptions: NextAuthOptions = {
@@ -126,6 +139,6 @@ export const authOptions: NextAuthOptions = {
   },
 
   useSecureCookies: isProd,
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: getAuthSecret(),
   debug: process.env.NODE_ENV === "development",
 };
