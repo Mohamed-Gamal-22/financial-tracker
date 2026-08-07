@@ -10,49 +10,87 @@
   --color-primary: var(--primary);
   --color-primary-hover: var(--primary-hover);
   --color-primary-light: var(--primary-light);
-  
+  --color-primary-mid: var(--primary-mid);
+  --color-primary-tint: var(--primary-tint);
+  --color-sky: var(--sky);
+  --color-purple: var(--purple);
+
   --color-bg-start: var(--background);
   --color-bg-end: var(--background-end);
+  --color-surface: var(--surface);
   --color-card-bg: var(--card-bg);
   --color-card-border: var(--card-border);
-  
+
   --color-text-main: var(--text-main);
   --color-text-muted: var(--text-muted);
   --color-text-inverse: var(--text-inverse);
-  
+
   --color-input-bg: var(--input-bg);
   --color-input-border: var(--input-border);
   --color-input-focus: var(--input-focus);
-  
+
   --color-accent-success: var(--accent-success);
   --color-accent-danger: var(--accent-danger);
   --color-accent-info: var(--accent-info);
-  
+
   --color-visual-card-bg: var(--visual-card-bg);
   --color-visual-card-border: var(--visual-card-border);
-  
+
   --font-sans: var(--font-cairo);
-  
+
   --animate-card-one: float-card-one 14s ease-in-out infinite;
   --animate-card-two: float-card-two 11s ease-in-out infinite;
   --animate-card-three: float-card-three 8s ease-in-out infinite;
   --animate-pulse-slow: pulse-slow 10s ease-in-out infinite;
 
   @keyframes float-card-one {
-    0%, 100% { transform: translate(0px, 0px) rotate(0deg); }
-    50% { transform: translate(-8px, -12px) rotate(1deg); }
+
+    0%,
+    100% {
+      transform: translate(0px, 0px) rotate(0deg);
+    }
+
+    50% {
+      transform: translate(-8px, -12px) rotate(1deg);
+    }
   }
+
   @keyframes float-card-two {
-    0%, 100% { transform: translate(0px, 0px) rotate(0deg); }
-    50% { transform: translate(12px, -6px) rotate(-1.5deg); }
+
+    0%,
+    100% {
+      transform: translate(0px, 0px) rotate(0deg);
+    }
+
+    50% {
+      transform: translate(12px, -6px) rotate(-1.5deg);
+    }
   }
+
   @keyframes float-card-three {
-    0%, 100% { transform: translate(0px, 0px) rotate(0deg); }
-    50% { transform: translate(-10px, 8px) rotate(0.8deg); }
+
+    0%,
+    100% {
+      transform: translate(0px, 0px) rotate(0deg);
+    }
+
+    50% {
+      transform: translate(-10px, 8px) rotate(0.8deg);
+    }
   }
+
   @keyframes pulse-slow {
-    0%, 100% { opacity: 0.3; transform: scale(1); }
-    50% { opacity: 0.5; transform: scale(1.08); }
+
+    0%,
+    100% {
+      opacity: 0.3;
+      transform: scale(1);
+    }
+
+    50% {
+      opacity: 0.5;
+      transform: scale(1.08);
+    }
   }
 }
 
@@ -60,4 +98,17 @@ body {
   background: var(--background);
   color: var(--text-main);
   font-family: var(--font-cairo), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+@keyframes alert-progress {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+.alert-progress {
+  animation: alert-progress 4.5s linear forwards;
 }

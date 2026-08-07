@@ -4,7 +4,7 @@ import Link from "next/link";
 export default function FinalCTA() {
   return (
     <section className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
-      <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-primary via-primary-hover to-accent-info text-white p-8 sm:p-12 lg:p-16 text-center space-y-8 shadow-2xl">
+      <div className="relative rounded-2xl overflow-hidden bg-gradient-to-tr from-sky to-purple text-white p-8 sm:p-12 lg:p-16 text-center space-y-8 shadow-2xl outline-4 outline-white outline-offset-3">
         {/* تأثير توهج داخلي */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.15)_0%,_transparent_60%)] pointer-events-none" />
 
@@ -20,13 +20,13 @@ export default function FinalCTA() {
         <div className="relative z-10 pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link
             href="/register"
-            className="w-full sm:w-auto px-8 py-4 font-bold text-primary bg-white hover:bg-primary-light rounded-2xl shadow-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] text-center"
+            className="w-full sm:w-auto px-8 py-4 font-bold text-primary bg-white hover:bg-primary-tint rounded-2xl shadow-xl transition-all duration-300 text-center"
           >
             سجل حسابك المجاني الآن
           </Link>
           <Link
             href="/login"
-            className="w-full sm:w-auto px-8 py-4 font-bold text-white bg-primary-hover/50 hover:bg-primary-hover/80 border border-white/20 hover:border-white/40 rounded-2xl transition-all text-center"
+            className="w-full sm:w-auto px-8 py-4 font-bold text-white border border-white/30 bg-white/10 hover:bg-white/20 rounded-2xl transition-all text-center"
           >
             تسجيل الدخول
           </Link>

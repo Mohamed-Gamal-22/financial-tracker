@@ -5,7 +5,7 @@ export default function RegisterShowcase() {
     <section className="flex-1 hidden lg:flex flex-col justify-center items-center p-12 relative overflow-hidden bg-gradient-to-tr from-primary/5 via-transparent to-accent-info/5 select-none">
       {/* تأثير الإضاءة الخلفية */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent pointer-events-none" />
-      
+
       {/* خطوط الخلفية التقنية */}
       <div className="absolute inset-0 opacity-[0.03] bg-[linear-gradient(to_right,#808080_1px,transparent_1px),linear-gradient(to_bottom,#808080_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
 
@@ -26,7 +26,7 @@ export default function RegisterShowcase() {
               <span>76%</span>
             </div>
           </div>
-          
+
           <p className="text-xs text-text-muted font-medium mb-4">أنت على بعد خطوات بسيطة من تحقيق هدفك لهذا الشهر!</p>
 
           {/* شريط التقدم التفاعلي */}
@@ -77,32 +77,32 @@ export default function RegisterShowcase() {
             <div className="relative flex items-center justify-center shrink-0">
               <svg width="74" height="74" viewBox="0 0 36 36" className="transform -rotate-90 origin-center">
                 <circle cx="18" cy="18" r="15.915" fill="none" stroke="var(--card-border)" strokeWidth="3" />
-                
+
                 {/* الإيجار والخدمات - 40% */}
-                <circle 
-                  cx="18" cy="18" r="15.915" 
-                  fill="none" 
-                  stroke="var(--primary)" 
-                  strokeWidth="3.2" 
-                  strokeDasharray="40 60" 
+                <circle
+                  cx="18" cy="18" r="15.915"
+                  fill="none"
+                  stroke="var(--primary)"
+                  strokeWidth="3.2"
+                  strokeDasharray="40 60"
                   strokeDashoffset="0"
                 />
                 {/* المشتريات - 35% */}
-                <circle 
-                  cx="18" cy="18" r="15.915" 
-                  fill="none" 
-                  stroke="var(--accent-success)" 
-                  strokeWidth="3.2" 
-                  strokeDasharray="35 65" 
+                <circle
+                  cx="18" cy="18" r="15.915"
+                  fill="none"
+                  stroke="var(--accent-success)"
+                  strokeWidth="3.2"
+                  strokeDasharray="35 65"
                   strokeDashoffset="-40"
                 />
                 {/* المواصلات - 25% */}
-                <circle 
-                  cx="18" cy="18" r="15.915" 
-                  fill="none" 
-                  stroke="var(--accent-info)" 
-                  strokeWidth="3.2" 
-                  strokeDasharray="25 75" 
+                <circle
+                  cx="18" cy="18" r="15.915"
+                  fill="none"
+                  stroke="var(--accent-info)"
+                  strokeWidth="3.2"
+                  strokeDasharray="25 75"
                   strokeDashoffset="-75"
                 />
               </svg>
@@ -110,7 +110,7 @@ export default function RegisterShowcase() {
                 <span className="text-[9px] text-text-muted font-bold uppercase">USD</span>
               </div>
             </div>
-            
+
             <div className="space-y-1.5 w-full text-xs">
               <div className="flex items-center justify-between font-semibold text-text-main">
                 <div className="flex items-center gap-1.5">
