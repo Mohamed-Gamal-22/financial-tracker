@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 const GUEST_ONLY = ["/login", "/register", "/forgot-password"];
 
 export default withAuth(
-  function middleware(req) {
+  function proxy(req) {
     const token = req.nextauth.token;
     const { pathname } = req.nextUrl;
     const isLoggedIn = Boolean(token);
