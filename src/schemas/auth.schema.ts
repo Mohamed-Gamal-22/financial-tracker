@@ -148,3 +148,17 @@ export type ConfirmEmailInput = z.infer<typeof confirmEmailSchema>;
 export type ResendOtpInput = z.infer<typeof resendOtpSchema>;
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+
+/** Google ID Token body for /auth/gmail and /auth/login/gmail */
+export const googleIdTokenSchema = z.object({
+  idToken: z
+    .string()
+    .trim()
+    .min(1, { message: "رمز Google مطلوب" }),
+});
+
+export type GoogleIdTokenInput = z.infer<typeof googleIdTokenSchema>;
+
+/** Which Google backend endpoint to call from NextAuth. */
+export const googleAuthModeSchema = z.enum(["continue", "login"]);
+export type GoogleAuthMode = z.infer<typeof googleAuthModeSchema>;

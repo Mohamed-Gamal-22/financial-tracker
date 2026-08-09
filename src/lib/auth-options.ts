@@ -1,9 +1,21 @@
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { login } from "@/services/api/auth";
+import {
+  continueWithGoogle,
+  login,
+  loginWithGmail,
+} from "@/services/api/auth";
 import { ApiError } from "@/services/api/types";
-import { loginSchema } from "@/schemas/auth.schema";
+import {
+  googleAuthModeSchema,
+  googleIdTokenSchema,
+  loginSchema,
+} from "@/schemas/auth.schema";
 import { parseLoginData } from "@/services/auth/parse-login";
+import {
+  emailFromGoogleIdToken,
+  nameFromGoogleIdToken,
+} from "@/services/auth/decode-id-token";
 
 const isProd = process.env.NODE_ENV === "production";
 
@@ -71,6 +83,73 @@ export const authOptions: NextAuthOptions = {
             throw error;
           }
           throw new Error("فشل تسجيل الدخول");
+        }
+      },
+    }),
+
+    CredentialsProvider({
+      id: "google-id-token",
+      name: "Google ID Token",
+      credentials: {
+        idToken: { label: "Google ID Token", type: "text" },
+        /** `continue` → POST /auth/gmail | `login` → POST /auth/login/gmail */
+        mode: { label: "Mode", type: "text" },
+      },
+      async authorize(credentials) {
+        const tokenParsed = googleIdTokenSchema.safeParse({
+          idToken: credentials?.idToken,
+        });
+        const modeParsed = googleAuthModeSchema.safeParse(
+          credentials?.mode || "continue",
+        );
+
+        if (!tokenParsed.success || !modeParsed.success) {
+          throw new Error("بيانات Google غير صالحة");
+        }
+
+        const { idToken } = tokenParsed.data;
+        const mode = modeParsed.data;
+
+        try {
+          const response =
+            mode === "login"
+              ? await loginWithGmail({ idToken })
+              : await continueWithGoogle({ idToken });
+
+          const fallbackEmail = emailFromGoogleIdToken(idToken);
+          const fallbackName = nameFromGoogleIdToken(idToken);
+
+          const sessionData = parseLoginData(
+            response.data,
+            fallbackEmail,
+            fallbackName || undefined,
+          );
+
+          if (!sessionData) {
+            throw new Error("تعذر قراءة بيانات الجلسة من الخادم");
+          }
+
+          return {
+            id: sessionData.user.email,
+            email: sessionData.user.email,
+            name: sessionData.user.fullname,
+            accessToken: sessionData.tokens.access_token,
+            refreshToken: sessionData.tokens.refresh_token,
+          };
+        } catch (error) {
+          if (error instanceof ApiError) {
+            const msg = error.message || "فشل تسجيل الدخول عبر Google";
+            if (/audience|Wrong recipient|requiredAudience/i.test(msg)) {
+              throw new Error(
+                "Client ID على الفرونت غير مطابق لإعداد Google في الـ backend",
+              );
+            }
+            throw new Error(msg);
+          }
+          if (error instanceof Error) {
+            throw error;
+          }
+          throw new Error("فشل تسجيل الدخول عبر Google");
         }
       },
     }),

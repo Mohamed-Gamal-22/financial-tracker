@@ -2,8 +2,23 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SessionProvider } from "next-auth/react";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 import { useState } from "react";
 import { AlertProvider } from "@/app/(auth)/alerts";
+
+function GoogleProvider({ children }: { children: React.ReactNode }) {
+  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID?.trim() ?? "";
+
+  // Still mount children when unset so the rest of the app works;
+  // GoogleAuthButton shows a clear error if the user clicks without a client id.
+  if (!clientId) {
+    return <>{children}</>;
+  }
+
+  return (
+    <GoogleOAuthProvider clientId={clientId}>{children}</GoogleOAuthProvider>
+  );
+}
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -19,7 +34,9 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider refetchInterval={5 * 60} refetchOnWindowFocus>
       <QueryClientProvider client={queryClient}>
-        <AlertProvider>{children}</AlertProvider>
+        <GoogleProvider>
+          <AlertProvider>{children}</AlertProvider>
+        </GoogleProvider>
       </QueryClientProvider>
     </SessionProvider>
   );

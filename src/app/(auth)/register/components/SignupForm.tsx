@@ -14,6 +14,7 @@ import {
   type SignupFormValues,
   type SignupInput,
 } from "@/schemas/auth.schema";
+import AuthDividerWithGoogle from "@/components/auth/AuthDividerWithGoogle";
 
 const inputClass =
   "w-full bg-input-bg border border-input-border focus:border-input-focus focus:ring-2 focus:ring-primary/20 rounded-xl ps-11 pe-4 py-2.5 text-sm text-text-main placeholder-text-muted outline-none transition-all";
@@ -71,11 +72,12 @@ export default function SignupForm({ onSuccess }: SignupFormProps) {
   });
 
   return (
-    <form
-      onSubmit={handleSubmit((values) => signupMutation.mutate(values))}
-      className="space-y-4.5 text-start"
-      noValidate
-    >
+    <div>
+      <form
+        onSubmit={handleSubmit((values) => signupMutation.mutate(values))}
+        className="space-y-4.5 text-start"
+        noValidate
+      >
       <div className="space-y-1.5">
         <label className="text-text-main text-xs font-bold uppercase tracking-wider block">
           الاسم بالكامل
@@ -197,7 +199,10 @@ export default function SignupForm({ onSuccess }: SignupFormProps) {
           {signupMutation.isPending ? "جاري الإنشاء..." : "إنشاء الحساب الجديد"}
         </span>
       </button>
-    </form>
+      </form>
+
+      <AuthDividerWithGoogle mode="continue" callbackUrl="/profile" />
+    </div>
   );
 }
 

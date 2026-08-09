@@ -14,6 +14,7 @@ import {
   safeInternalPath,
 } from "@/services/auth/session-utils";
 import { loginSchema, type LoginInput } from "@/schemas/auth.schema";
+import AuthDividerWithGoogle from "@/components/auth/AuthDividerWithGoogle";
 
 const NEXTAUTH_GENERIC_ERRORS = new Set([
   "CredentialsSignin",
@@ -116,11 +117,12 @@ export default function LoginForm() {
   });
 
   return (
-    <form
-      onSubmit={handleSubmit((values) => loginMutation.mutate(values))}
-      className="space-y-5 text-start"
-      noValidate
-    >
+    <div>
+      <form
+        onSubmit={handleSubmit((values) => loginMutation.mutate(values))}
+        className="space-y-5 text-start"
+        noValidate
+      >
       <div className="space-y-1.5">
         <label className="text-text-main text-xs font-bold uppercase tracking-wider block">
           البريد الإلكتروني
@@ -198,7 +200,10 @@ export default function LoginForm() {
             : "تسجيل الدخول إلى الحساب"}
         </span>
       </button>
-    </form>
+      </form>
+
+      <AuthDividerWithGoogle mode="login" callbackUrl={callbackUrl} />
+    </div>
   );
 }
 

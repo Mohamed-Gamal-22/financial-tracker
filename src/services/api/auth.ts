@@ -1,6 +1,7 @@
 import type {
   ConfirmEmailInput,
   ForgotPasswordInput,
+  GoogleIdTokenInput,
   LoginInput,
   ResendOtpInput,
   ResetPasswordInput,
@@ -66,6 +67,22 @@ export function forgotPassword(body: ForgotPasswordInput) {
 export function resetPassword(body: ResetPasswordInput) {
   return apiRequest("/auth/reset-password", {
     method: "PATCH",
+    body: JSON.stringify(body),
+  });
+}
+
+/** POST /auth/gmail — Continue with Google (sign up or login) */
+export function continueWithGoogle(body: GoogleIdTokenInput) {
+  return apiRequest<LoginResponseData>("/auth/gmail", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+/** POST /auth/login/gmail — Login with Gmail (existing Google account only) */
+export function loginWithGmail(body: GoogleIdTokenInput) {
+  return apiRequest<LoginResponseData>("/auth/login/gmail", {
+    method: "POST",
     body: JSON.stringify(body),
   });
 }
