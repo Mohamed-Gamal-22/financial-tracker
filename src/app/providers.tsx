@@ -16,7 +16,9 @@ function GoogleProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <GoogleOAuthProvider clientId={clientId}>{children}</GoogleOAuthProvider>
+    <GoogleOAuthProvider clientId={clientId} locale="ar">
+      {children}
+    </GoogleOAuthProvider>
   );
 }
 
