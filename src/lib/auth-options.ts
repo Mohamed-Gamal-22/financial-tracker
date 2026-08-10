@@ -16,6 +16,12 @@ import {
   emailFromGoogleIdToken,
   nameFromGoogleIdToken,
 } from "@/services/auth/decode-id-token";
+import { refreshAccessToken } from "@/services/auth/refresh-access-token";
+import { REFRESH_TOKEN_ERROR } from "@/services/auth/refresh-constants";
+import {
+  getAccessTokenExpiresAt,
+  shouldRotateAccessToken,
+} from "@/services/auth/token-expiry";
 
 const isProd = process.env.NODE_ENV === "production";
 
@@ -172,14 +178,41 @@ export const authOptions: NextAuthOptions = {
   },
 
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
         token.email = user.email;
         token.fullname = user.name;
         token.accessToken = user.accessToken;
         token.refreshToken = user.refreshToken;
+        token.accessTokenExpires =
+          getAccessTokenExpiresAt(user.accessToken) ?? undefined;
+        token.error = undefined;
+        return token;
       }
+
+      if (token.error === REFRESH_TOKEN_ERROR) {
+        return token;
+      }
+
+      if (!token.accessTokenExpires && token.accessToken) {
+        token.accessTokenExpires =
+          getAccessTokenExpiresAt(token.accessToken) ?? undefined;
+      }
+
+      const forceRotate =
+        trigger === "update" &&
+        Boolean(
+          session &&
+            typeof session === "object" &&
+            "forceTokenRotate" in session &&
+            (session as { forceTokenRotate?: boolean }).forceTokenRotate,
+        );
+
+      if (forceRotate || shouldRotateAccessToken(token.accessTokenExpires)) {
+        return refreshAccessToken(token);
+      }
+
       return token;
     },
 
@@ -191,6 +224,8 @@ export const authOptions: NextAuthOptions = {
         session.user.name = token.fullname ?? "";
       }
       session.accessToken = token.accessToken;
+      session.accessTokenExpires = token.accessTokenExpires;
+      session.error = token.error;
       // refreshToken stays only inside the encrypted JWT cookie
       return session;
     },
@@ -207,7 +242,7 @@ export const authOptions: NextAuthOptions = {
       } catch {
         // ignore invalid URLs
       }
-      return `${baseUrl}/profile`;
+      return `${baseUrl}/dashboard`;
     },
   },
 

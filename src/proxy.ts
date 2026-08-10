@@ -14,7 +14,7 @@ export default withAuth(
     );
 
     if (isLoggedIn && (isGuestOnly || pathname === "/")) {
-      return NextResponse.redirect(new URL("/profile", req.url));
+      return NextResponse.redirect(new URL("/dashboard", req.url));
     }
 
     return NextResponse.next();
@@ -27,7 +27,14 @@ export default withAuth(
       authorized: ({ token, req }) => {
         const { pathname } = req.nextUrl;
         const isProtected =
-          pathname === "/profile" || pathname.startsWith("/profile/");
+          pathname === "/dashboard" ||
+          pathname.startsWith("/dashboard/") ||
+          pathname === "/transactions" ||
+          pathname.startsWith("/transactions/") ||
+          pathname === "/categories" ||
+          pathname.startsWith("/categories/") ||
+          pathname === "/profile" ||
+          pathname.startsWith("/profile/");
 
         if (isProtected) {
           return Boolean(token);
@@ -42,6 +49,9 @@ export default withAuth(
 export const config = {
   matcher: [
     "/",
+    "/dashboard/:path*",
+    "/transactions/:path*",
+    "/categories/:path*",
     "/profile/:path*",
     "/login",
     "/register",

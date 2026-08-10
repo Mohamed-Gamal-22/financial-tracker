@@ -15,7 +15,7 @@ export default function RedirectIfAuthenticated({
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      router.replace("/profile");
+      router.replace("/dashboard");
     }
   }, [isAuthenticated, isLoading, router]);
 

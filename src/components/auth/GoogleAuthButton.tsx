@@ -97,21 +97,23 @@ function disableGoogleAutoSelect() {
 /**
  * Custom-looking Google button (Arabic label) over an invisible GIS button.
  * Official GIS personalizes with the signed-in email — we hide that and always
- * show "تسجيل بالجيميل", then open Google's account chooser on click.
+ * show an Arabic Gmail label, then open Google's account chooser on click.
  */
 export default function GoogleAuthButton({
   mode,
-  callbackUrl = "/profile",
+  callbackUrl = "/dashboard",
 }: GoogleAuthButtonProps) {
   const router = useRouter();
   const { showAlert } = useAlert();
-  const safeCallback = safeInternalPath(callbackUrl, "/profile");
+  const safeCallback = safeInternalPath(callbackUrl, "/dashboard");
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID?.trim();
   const containerRef = useRef<HTMLDivElement>(null);
   const [buttonWidth, setButtonWidth] = useState(320);
 
   const label =
-    mode === "login" ? "تسجيل الدخول بالجيميل" : "التسجيل بالجيميل";
+    mode === "login"
+      ? "تسجيل الدخول باستخدام الـ Gmail"
+      : "انشاء حساب باستخدام الـ Gmail";
 
   useEffect(() => {
     disableGoogleAutoSelect();

@@ -9,7 +9,7 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, isAuthenticated, isLoading } = useAuth();
   const loggedIn = !isLoading && isAuthenticated && user;
-  const homeHref = loggedIn ? "/profile" : "/";
+  const homeHref = loggedIn ? "/dashboard" : "/";
   const fullname = user?.fullname || "";
 
   return (

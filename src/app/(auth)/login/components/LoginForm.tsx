@@ -48,7 +48,7 @@ export default function LoginForm() {
 
   const callbackUrl = safeInternalPath(
     searchParams.get("callbackUrl") ?? searchParams.get("next"),
-    "/profile",
+    "/dashboard",
   );
 
   const {

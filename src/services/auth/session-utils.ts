@@ -10,7 +10,7 @@ export function clearLegacyAuthStorage() {
 /** Only allow same-origin relative paths (blocks open redirects). */
 export function safeInternalPath(
   value: string | null | undefined,
-  fallback = "/profile",
+  fallback = "/dashboard",
 ) {
   if (!value) return fallback;
   if (!value.startsWith("/")) return fallback;

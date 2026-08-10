@@ -201,7 +201,7 @@ export default function SignupForm({ onSuccess }: SignupFormProps) {
       </button>
       </form>
 
-      <AuthDividerWithGoogle mode="continue" callbackUrl="/profile" />
+      <AuthDividerWithGoogle mode="continue" callbackUrl="/dashboard" />
     </div>
   );
 }

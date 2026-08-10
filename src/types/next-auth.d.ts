@@ -9,6 +9,10 @@ declare module "next-auth" {
     } & DefaultSession["user"];
     /** Backend API access token (refresh stays server-only in the JWT). */
     accessToken?: string;
+    /** Access token expiry timestamp in ms (from JWT `exp`). */
+    accessTokenExpires?: number;
+    /** Set when rotate/refresh fails — client should sign out. */
+    error?: string;
   }
 
   interface User {
@@ -27,5 +31,7 @@ declare module "next-auth/jwt" {
     fullname?: string;
     accessToken?: string;
     refreshToken?: string;
+    accessTokenExpires?: number;
+    error?: string;
   }
 }

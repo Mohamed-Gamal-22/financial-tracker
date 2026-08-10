@@ -2,6 +2,14 @@
 
 import { signOut, useSession } from "next-auth/react";
 import { clearLegacyAuthStorage } from "@/services/auth/session-utils";
+import { logoutUser, type LogoutFlag } from "@/services/api/user";
+
+type LogoutOptions = {
+  flag?: LogoutFlag;
+  callbackUrl?: string;
+  /** Skip POST /user/logout (e.g. after freeze already invalidated the session). */
+  skipApi?: boolean;
+};
 
 export function useAuth() {
   const { data: session, status, update } = useSession();
@@ -14,7 +22,21 @@ export function useAuth() {
       }
     : null;
 
-  async function logout(callbackUrl = "/login") {
+  async function logout(options: LogoutOptions | string = "/login") {
+    const flag: LogoutFlag =
+      typeof options === "string" ? "one" : (options.flag ?? "one");
+    const callbackUrl =
+      typeof options === "string" ? options : (options.callbackUrl ?? "/login");
+    const skipApi = typeof options === "string" ? false : Boolean(options.skipApi);
+
+    try {
+      if (!skipApi && session?.accessToken) {
+        await logoutUser(flag);
+      }
+    } catch {
+      // Always clear the local session even if the API call fails.
+    }
+
     clearLegacyAuthStorage();
     await signOut({ callbackUrl });
   }

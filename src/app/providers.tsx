@@ -5,6 +5,7 @@ import { SessionProvider } from "next-auth/react";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { useState } from "react";
 import { AlertProvider } from "@/app/(auth)/alerts";
+import TokenRefreshWatcher from "@/components/auth/TokenRefreshWatcher";
 
 function GoogleProvider({ children }: { children: React.ReactNode }) {
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID?.trim() ?? "";
@@ -34,10 +35,13 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <SessionProvider refetchInterval={5 * 60} refetchOnWindowFocus>
+    <SessionProvider refetchInterval={4 * 60} refetchOnWindowFocus>
       <QueryClientProvider client={queryClient}>
         <GoogleProvider>
-          <AlertProvider>{children}</AlertProvider>
+          <AlertProvider>
+            <TokenRefreshWatcher />
+            {children}
+          </AlertProvider>
         </GoogleProvider>
       </QueryClientProvider>
     </SessionProvider>
