@@ -23,7 +23,7 @@ export class ApiError extends Error {
   errors?: ApiResponse["errors"];
 
   constructor(payload: ApiResponse) {
-    super(payload.message || "Something went wrong");
+    super(payload.message || "حدث خطأ ما");
     this.name = "ApiError";
     this.success = payload.success;
     this.status = payload.status;
