@@ -1,14 +1,15 @@
 import type { ReactNode } from "react";
+import type { CategoryType } from "@/schemas/category.schema";
+import { CATEGORY_TYPE_LABELS } from "@/schemas/category.schema";
 
 export type CategoryCardData = {
   id: string;
   name: string;
-  countLabel: string;
-  total: string;
+  type: CategoryType;
   iconBg: string;
   icon: ReactNode;
   accentBorder: string;
-  totalClass: string;
+  badgeClass: string;
 };
 
 type CategoryCardProps = {
@@ -31,11 +32,14 @@ export default function CategoryCard({ category }: CategoryCardProps) {
           {category.icon}
         </span>
         <div className="min-w-0 flex-1">
-          <h3 className="text-sm font-extrabold text-text-main truncate">{category.name}</h3>
-          <p className="mt-1 text-xs font-medium text-text-muted">{category.countLabel}</p>
-          <p className={`mt-3 text-sm font-extrabold ${category.totalClass}`}>
-            إجمالي: {category.total}
-          </p>
+          <h3 className="text-sm font-extrabold text-text-main truncate">
+            {category.name}
+          </h3>
+          <span
+            className={`mt-1.5 inline-flex rounded-lg px-2 py-0.5 text-[11px] font-bold ${category.badgeClass}`}
+          >
+            {CATEGORY_TYPE_LABELS[category.type]}
+          </span>
         </div>
       </div>
     </article>

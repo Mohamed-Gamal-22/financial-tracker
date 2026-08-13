@@ -4,18 +4,16 @@ const BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ??
   "https://finance-tracker-five-liart.vercel.app";
 
-/** API message locale for alerts and responses. */
+/**
+ * Prefer Accept-Language header over `?lang=` query.
+ * Strict backends (e.g. GET /transaction) reject unknown query params with Validation Error.
+ */
 const API_LANG = "ar";
 
 export type ApiRequestOptions = RequestInit & {
   /** Attach `Authorization: Bearer <accessToken>` when provided. */
   accessToken?: string | null;
 };
-
-function withLangQuery(path: string): string {
-  const separator = path.includes("?") ? "&" : "?";
-  return `${path}${separator}lang=${API_LANG}`;
-}
 
 export async function apiRequest<T>(
   path: string,
@@ -25,6 +23,7 @@ export async function apiRequest<T>(
 
   const headers: HeadersInit = {
     "Content-Type": "application/json",
+    "Accept-Language": API_LANG,
     ...(initHeaders ?? {}),
   };
 
@@ -32,7 +31,7 @@ export async function apiRequest<T>(
     (headers as Record<string, string>).Authorization = `Bearer ${accessToken}`;
   }
 
-  const response = await fetch(`${BASE_URL}${withLangQuery(path)}`, {
+  const response = await fetch(`${BASE_URL}${path}`, {
     ...rest,
     headers,
   });

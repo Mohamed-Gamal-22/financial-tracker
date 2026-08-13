@@ -1,43 +1,70 @@
-const BARS = [
-  { h: "45%", tone: "bg-primary/30" },
-  { h: "70%", tone: "bg-primary/50" },
-  { h: "55%", tone: "bg-sky/60" },
-  { h: "85%", tone: "bg-primary" },
-  { h: "40%", tone: "bg-primary/35" },
-  { h: "65%", tone: "bg-sky/70" },
-  { h: "78%", tone: "bg-primary/80" },
-  { h: "50%", tone: "bg-primary/40" },
-  { h: "92%", tone: "bg-primary" },
-  { h: "60%", tone: "bg-sky/50" },
-  { h: "35%", tone: "bg-primary/25" },
-  { h: "72%", tone: "bg-primary/70" },
-];
+"use client";
+
+import { useQuery } from "@tanstack/react-query";
+import { getTransactionSummary } from "@/services/api/transaction";
+import { formatMoney, sumTotals } from "@/lib/format";
 
 export default function SpendingChart() {
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["transaction-summary"],
+    queryFn: async () => (await getTransactionSummary()).data,
+  });
+
+  const income = sumTotals(data?.income);
+  const expense = sumTotals(data?.expense);
+  const savings = sumTotals(data?.savings);
+  const max = Math.max(income, expense, savings, 1);
+
+  const bars = [
+    {
+      label: "دخل",
+      value: income,
+      h: `${Math.round((income / max) * 100)}%`,
+      tone: "bg-accent-success",
+    },
+    {
+      label: "مصروف",
+      value: expense,
+      h: `${Math.round((expense / max) * 100)}%`,
+      tone: "bg-accent-danger",
+    },
+    {
+      label: "ادخار",
+      value: savings,
+      h: `${Math.round((savings / max) * 100)}%`,
+      tone: "bg-sky",
+    },
+  ];
+
   return (
     <section className="rounded-2xl border border-card-border bg-surface shadow-sm p-5 sm:p-6 text-start h-full">
       <div className="flex items-center justify-between gap-3 mb-5">
         <h2 className="text-base font-extrabold text-text-main">تحليل الإنفاق</h2>
-        <button
-          type="button"
-          className="inline-flex items-center gap-1.5 rounded-lg border border-card-border bg-primary-tint/40 px-3 py-1.5 text-xs font-bold text-text-main cursor-pointer"
-        >
+        <span className="inline-flex items-center rounded-lg border border-card-border bg-primary-tint/40 px-3 py-1.5 text-xs font-bold text-text-main">
           هذا الشهر
-          <svg className="w-3.5 h-3.5 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
+        </span>
       </div>
 
-      <div className="h-48 sm:h-56 flex items-end gap-1.5 sm:gap-2 px-1" aria-hidden>
-        {BARS.map((bar, index) => (
-          <div
-            key={index}
-            className={`flex-1 rounded-t-md ${bar.tone} transition-all`}
-            style={{ height: bar.h }}
-          />
-        ))}
-      </div>
+      {isLoading ? (
+        <p className="text-sm font-bold text-text-muted py-16 text-center">جاري التحميل...</p>
+      ) : isError ? (
+        <p className="text-sm font-bold text-accent-danger py-16 text-center">تعذر تحميل التحليل</p>
+      ) : (
+        <>
+          <div className="h-48 sm:h-56 flex items-end gap-6 px-4" aria-hidden>
+            {bars.map((bar) => (
+              <div key={bar.label} className="flex-1 flex flex-col items-center gap-2 h-full justify-end">
+                <p className="text-xs font-bold text-text-muted">{formatMoney(bar.value)}</p>
+                <div
+                  className={`w-full max-w-16 rounded-t-xl ${bar.tone} transition-all`}
+                  style={{ height: bar.h, minHeight: bar.value > 0 ? "8%" : "2%" }}
+                />
+                <p className="text-xs font-extrabold text-text-main">{bar.label}</p>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </section>
   );
 }
