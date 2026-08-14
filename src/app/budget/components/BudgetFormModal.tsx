@@ -1,6 +1,9 @@
 "use client";
 
-import { useEffect, useId } from "react";
+/** RHF register + React Compiler can desync input DOM from form state in production. */
+"use no memo";
+
+import { useEffect, useId, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -38,6 +41,8 @@ export default function BudgetFormModal({
   const { showAlert } = useAlert();
   const queryClient = useQueryClient();
   const isEdit = mode === "edit";
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   const { data: categories = [] } = useQuery({
     queryKey: ["categories"],
@@ -63,6 +68,7 @@ export default function BudgetFormModal({
     resolver: zodResolver(createBudgetSchema),
   });
 
+  // Reset only when the modal opens (or default month changes) — not on every parent re-render.
   useEffect(() => {
     if (!open) return;
     reset({
@@ -70,9 +76,13 @@ export default function BudgetFormModal({
       amount: "" as unknown as number,
       month,
     });
+  }, [open, reset, month]);
+
+  useEffect(() => {
+    if (!open) return;
 
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape") onCloseRef.current();
     };
     document.addEventListener("keydown", onKeyDown);
     const previousOverflow = document.body.style.overflow;
@@ -81,7 +91,7 @@ export default function BudgetFormModal({
       document.removeEventListener("keydown", onKeyDown);
       document.body.style.overflow = previousOverflow;
     };
-  }, [open, onClose, reset, month]);
+  }, [open]);
 
   const mutation = useMutation({
     mutationFn: createBudget,

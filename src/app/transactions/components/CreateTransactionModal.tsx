@@ -1,6 +1,9 @@
 "use client";
 
-import { useEffect, useId } from "react";
+/** RHF register + React Compiler can desync input DOM from form state in production. */
+"use no memo";
+
+import { useEffect, useId, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -39,6 +42,8 @@ export default function CreateTransactionModal({
   const titleId = useId();
   const { showAlert } = useAlert();
   const queryClient = useQueryClient();
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   const { data: categories = [] } = useQuery({
     queryKey: ["categories"],
@@ -73,6 +78,7 @@ export default function CreateTransactionModal({
     resolver: zodResolver(createTransactionSchema),
   });
 
+  // Reset only when the modal opens — do NOT depend on `onClose` (new fn every parent render).
   useEffect(() => {
     if (!open) return;
     reset({
@@ -81,9 +87,13 @@ export default function CreateTransactionModal({
       category: "",
       date: "",
     });
+  }, [open, reset]);
+
+  useEffect(() => {
+    if (!open) return;
 
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape") onCloseRef.current();
     };
     document.addEventListener("keydown", onKeyDown);
     const previousOverflow = document.body.style.overflow;
@@ -92,7 +102,7 @@ export default function CreateTransactionModal({
       document.removeEventListener("keydown", onKeyDown);
       document.body.style.overflow = previousOverflow;
     };
-  }, [open, onClose, reset]);
+  }, [open]);
 
   const mutation = useMutation({
     mutationFn: createTransaction,
