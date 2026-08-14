@@ -67,7 +67,8 @@ export default function BudgetAlerts() {
         const id = category?._id ?? "";
         const spent = id ? (spentByCategoryId.get(id) ?? 0) : 0;
         const cap = Number(budget.amount) || 0;
-        const percent = cap > 0 ? Math.round((spent / cap) * 100) : 0;
+        if (cap <= 0) return null;
+        const percent = Math.round((spent / cap) * 100);
         return {
           id: budget._id,
           title: category?.name ?? "تصنيف",
@@ -77,6 +78,7 @@ export default function BudgetAlerts() {
           status: statusFor(percent),
         };
       })
+      .filter((row): row is NonNullable<typeof row> => row != null)
       .sort((a, b) => b.percent - a.percent)
       .slice(0, 5);
   }, [budgets, spentByCategoryId]);

@@ -73,3 +73,12 @@ export function currentYearMonth() {
   const m = String(now.getMonth() + 1).padStart(2, "0");
   return `${y}-${m}`;
 }
+
+/** -1 past, 0 current, 1 future (invalid → treat as past). */
+export function compareYearMonth(month: string, relativeTo = currentYearMonth()) {
+  if (!/^\d{4}-\d{2}$/.test(month) || !/^\d{4}-\d{2}$/.test(relativeTo)) {
+    return -1;
+  }
+  if (month === relativeTo) return 0;
+  return month < relativeTo ? -1 : 1;
+}
