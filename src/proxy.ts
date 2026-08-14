@@ -38,7 +38,9 @@ export default withAuth(
           pathname === "/reports" ||
           pathname.startsWith("/reports/") ||
           pathname === "/budget" ||
-          pathname.startsWith("/budget/");
+          pathname.startsWith("/budget/") ||
+          pathname === "/notifications" ||
+          pathname.startsWith("/notifications/");
 
         if (isProtected) {
           return Boolean(token);
@@ -59,6 +61,7 @@ export const config = {
     "/profile/:path*",
     "/reports/:path*",
     "/budget/:path*",
+    "/notifications/:path*",
     "/login",
     "/register",
     "/forgot-password",

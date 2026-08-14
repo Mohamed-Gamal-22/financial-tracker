@@ -1,0 +1,192 @@
+.masrofy-daypicker.rdp-root {
+  --rdp-accent-color: var(--primary);
+  --rdp-accent-background-color: var(--primary-tint);
+  --rdp-today-color: var(--primary);
+  --rdp-selected-border: 2px solid var(--primary);
+  --rdp-outside-opacity: 0.4;
+  --rdp-day-height: 40px;
+  --rdp-day-width: 40px;
+  --rdp-day_button-height: 38px;
+  --rdp-day_button-width: 38px;
+  --rdp-day_button-border-radius: 0.75rem;
+  --rdp-nav_button-height: 2rem;
+  --rdp-nav_button-width: 2rem;
+  --rdp-nav-height: 2.5rem;
+  --rdp-dropdown-gap: 0.4rem;
+  margin: 0;
+  color: var(--text-main);
+  font-family: inherit;
+}
+
+.masrofy-daypicker .rdp-month_caption {
+  font-weight: 800;
+  font-size: 0.95rem;
+}
+
+.masrofy-daypicker .rdp-weekday {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  opacity: 1;
+}
+
+.masrofy-daypicker .rdp-day_button {
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.masrofy-daypicker .rdp-day_button:hover:not(:disabled) {
+  background: var(--primary-tint);
+}
+
+.masrofy-daypicker .rdp-selected .rdp-day_button {
+  background: var(--primary);
+  color: var(--text-inverse);
+  border-color: var(--primary);
+  font-weight: 800;
+}
+
+.masrofy-daypicker .rdp-today:not(.rdp-selected) .rdp-day_button {
+  font-weight: 800;
+}
+
+.masrofy-daypicker .rdp-chevron {
+  fill: var(--text-main);
+}
+
+.masrofy-daypicker .rdp-button_previous,
+.masrofy-daypicker .rdp-button_next {
+  border-radius: 0.75rem;
+  cursor: pointer;
+  outline: none;
+}
+
+.masrofy-daypicker .rdp-button_previous:hover,
+.masrofy-daypicker .rdp-button_next:hover {
+  background: var(--primary-tint);
+}
+
+.masrofy-daypicker .rdp-button_previous:focus-visible,
+.masrofy-daypicker .rdp-button_next:focus-visible {
+  outline: none;
+  background: var(--primary-tint);
+}
+
+.masrofy-daypicker .rdp-dropdowns {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--rdp-dropdown-gap);
+}
+
+/* Hide unused native select chrome from the library defaults when customized. */
+.masrofy-daypicker .rdp-dropdown,
+.masrofy-daypicker .rdp-caption_label {
+  display: none;
+}
+
+/* ---- Custom month/year dropdown ---- */
+
+.masrofy-cal-dropdown {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.masrofy-cal-dropdown__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  border-radius: 9999px;
+  background: var(--primary-tint);
+  color: var(--text-main);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 800;
+  padding: 0.4rem 0.75rem;
+  transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.masrofy-cal-dropdown__trigger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--primary) 16%, white);
+  color: var(--primary);
+}
+
+.masrofy-cal-dropdown__trigger:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 25%, transparent);
+}
+
+.masrofy-cal-dropdown__trigger:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.masrofy-cal-dropdown__label {
+  line-height: 1.2;
+}
+
+.masrofy-cal-dropdown__chevron {
+  color: var(--text-muted);
+  transition: transform 0.15s ease;
+  flex-shrink: 0;
+}
+
+.masrofy-cal-dropdown__chevron.is-open {
+  transform: rotate(180deg);
+  color: var(--primary);
+}
+
+.masrofy-cal-dropdown__menu {
+  position: absolute;
+  z-index: 60;
+  top: calc(100% + 0.4rem);
+  inset-inline-start: 0;
+  min-width: 8.5rem;
+  max-height: 14rem;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0.35rem;
+  list-style: none;
+  border: none;
+  border-radius: 1rem;
+  background: var(--surface);
+  box-shadow:
+    0 10px 30px rgba(15, 23, 42, 0.12),
+    0 0 0 1px color-mix(in srgb, var(--primary) 10%, transparent);
+}
+
+.masrofy-cal-dropdown__option {
+  width: 100%;
+  display: block;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  text-align: start;
+  border-radius: 0.75rem;
+  background: transparent;
+  color: var(--text-main);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 0.55rem 0.75rem;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.masrofy-cal-dropdown__option:hover:not(:disabled) {
+  background: var(--primary-tint);
+  color: var(--primary);
+}
+
+.masrofy-cal-dropdown__option.is-active {
+  background: var(--primary);
+  color: var(--text-inverse);
+}
+
+.masrofy-cal-dropdown__option:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
 import AppSidebar from "@/components/AppSidebar";
+import DayPickerField from "@/components/date/DayPickerField";
+import MonthPickerField from "@/components/date/MonthPickerField";
 import { useAlert } from "@/app/(auth)/alerts";
 import { getTransactionReport } from "@/services/api/transaction";
 import { ApiError } from "@/services/api/types";
@@ -16,9 +18,6 @@ import {
   type SummaryCategoryRow,
 } from "@/schemas/transaction.schema";
 import { formatMoney } from "@/lib/format";
-
-const inputClass =
-  "w-full bg-input-bg border border-input-border focus:border-input-focus focus:ring-2 focus:ring-primary/20 rounded-xl px-4 py-2.5 text-sm text-text-main outline-none transition-all";
 
 function Section({
   title,
@@ -79,6 +78,7 @@ export default function ReportsPage() {
     register,
     handleSubmit,
     watch,
+    control,
     formState: { errors },
   } = useForm<ReportQueryFormValues>({
     defaultValues: { mode: "current", date: "", month: "" },
@@ -174,7 +174,17 @@ export default function ReportsPage() {
             {mode === "day" && (
               <div className="space-y-1.5 max-w-xs">
                 <label className="text-xs font-bold text-text-main block">التاريخ</label>
-                <input type="date" className={inputClass} {...register("date")} />
+                <Controller
+                  name="date"
+                  control={control}
+                  render={({ field }) => (
+                    <DayPickerField
+                      value={field.value ?? ""}
+                      onChange={field.onChange}
+                      placeholder="اختر التاريخ"
+                    />
+                  )}
+                />
                 {errors.date && (
                   <p className="text-accent-danger text-xs font-medium">{errors.date.message}</p>
                 )}
@@ -184,7 +194,17 @@ export default function ReportsPage() {
             {mode === "month" && (
               <div className="space-y-1.5 max-w-xs">
                 <label className="text-xs font-bold text-text-main block">الشهر</label>
-                <input type="month" className={inputClass} {...register("month")} />
+                <Controller
+                  name="month"
+                  control={control}
+                  render={({ field }) => (
+                    <MonthPickerField
+                      value={field.value ?? ""}
+                      onChange={field.onChange}
+                      placeholder="اختر الشهر"
+                    />
+                  )}
+                />
                 {errors.month && (
                   <p className="text-accent-danger text-xs font-medium">{errors.month.message}</p>
                 )}

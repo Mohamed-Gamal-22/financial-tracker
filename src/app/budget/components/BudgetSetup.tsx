@@ -5,12 +5,20 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAlert } from "@/app/(auth)/alerts";
 import type { Category } from "@/services/api/category";
 import type { Budget } from "@/schemas/budget.schema";
-import { createBudget, resolveBudgetCategory } from "@/services/api/budget";
+import {
+  createBudget,
+  resolveBudgetCategory,
+  updateBudget,
+} from "@/services/api/budget";
 import { ApiError } from "@/services/api/types";
 import { compareYearMonth, formatMoney } from "@/lib/format";
 
 const inputClass =
   "w-full min-w-0 bg-input-bg border border-input-border focus:border-input-focus focus:ring-2 focus:ring-primary/20 rounded-xl px-3 py-2 text-sm text-text-main placeholder-text-muted outline-none transition-all";
+
+function isBudgetObjectId(id: string) {
+  return /^[a-fA-F0-9]{24}$/.test(id);
+}
 
 type BudgetSetupProps = {
   categories: Category[];
@@ -39,7 +47,7 @@ export default function BudgetSetup({
   const canEditCaps = monthRelation === 0;
   const monthLockMessage =
     monthRelation < 0
-      ? "الشهر ده عدى خلاص — مش هتقدر تحدد سقف الميزانية عليه، تقدر تتفرج على اللي اتحمل بس"
+      ? "الشهر ده انتهى خلاص — مش هتقدر تحدد سقف الميزانية عليه، تقدر تتفرج على اللي اتحمل بس"
       : monthRelation > 0
         ? "الشهر ده لسه ما جاش — تحديد سقف الميزانية متاح للشهر الحالي فقط"
         : null;
@@ -71,36 +79,79 @@ export default function BudgetSetup({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- sync when server/override data changes
   }, [categories, budgetByCategoryId, month, amountOverrides]);
 
-  const mutation = useMutation({
+  async function afterSave(
+    categoryId: string,
+    amount: number,
+    message: string,
+    status?: number,
+  ) {
+    onAmountSaved(categoryId, amount);
+    showAlert({
+      message,
+      success: true,
+      status,
+    });
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["budgets"] }),
+      queryClient.invalidateQueries({ queryKey: ["transaction-summary"] }),
+      queryClient.invalidateQueries({ queryKey: ["notifications"] }),
+    ]);
+  }
+
+  function handleSaveError(error: unknown, fallback: string) {
+    if (error instanceof ApiError) {
+      showAlert(error.toAlertPayload());
+      return;
+    }
+    showAlert({
+      message: error instanceof Error ? error.message : fallback,
+      success: false,
+    });
+  }
+
+  const createMutation = useMutation({
     mutationFn: createBudget,
     onSuccess: async (response, variables) => {
       const savedAmount =
         Number(response.data?.amount) > 0
           ? Number(response.data?.amount)
           : variables.amount;
-      onAmountSaved(variables.category, savedAmount);
-      showAlert({
-        message: response.message || "تم حفظ الميزانية بنجاح",
-        success: true,
-        status: response.status,
-      });
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["budgets"] }),
-        queryClient.invalidateQueries({ queryKey: ["transaction-summary"] }),
-      ]);
+      await afterSave(
+        variables.category,
+        savedAmount,
+        response.message || "تم حفظ الميزانية بنجاح",
+        response.status,
+      );
     },
-    onError: (error) => {
-      if (error instanceof ApiError) {
-        showAlert(error.toAlertPayload());
-        return;
-      }
-      showAlert({
-        message: error instanceof Error ? error.message : "تعذر حفظ الميزانية",
-        success: false,
-      });
-    },
+    onError: (error) => handleSaveError(error, "تعذر حفظ الميزانية"),
     onSettled: () => setSavingId(null),
   });
+
+  const updateMutation = useMutation({
+    mutationFn: ({
+      id,
+      body,
+    }: {
+      id: string;
+      body: { category: string; amount: number; month: string };
+    }) => updateBudget(id, body),
+    onSuccess: async (response, variables) => {
+      const savedAmount =
+        Number(response.data?.amount) > 0
+          ? Number(response.data?.amount)
+          : variables.body.amount;
+      await afterSave(
+        variables.body.category,
+        savedAmount,
+        response.message || "تم تحديث الميزانية بنجاح",
+        response.status,
+      );
+    },
+    onError: (error) => handleSaveError(error, "تعذر تحديث الميزانية"),
+    onSettled: () => setSavingId(null),
+  });
+
+  const isMutating = createMutation.isPending || updateMutation.isPending;
 
   if (isLoading) {
     return (
@@ -124,7 +175,7 @@ export default function BudgetSetup({
         <h2 className="text-base font-extrabold text-text-main">تحديد ميزانية التصنيفات</h2>
         <p className="mt-1 text-xs font-medium text-text-muted">
           {canEditCaps
-            ? "أدخل سقف كل تصنيف مصروف ثم احفظ — التعديل لاحقًا لما يتوفر من الباك"
+            ? "أدخل سقف كل تصنيف مصروف ثم احفظ أو حدّث المبلغ لو كان محفوظًا قبل كده"
             : "عرض فقط — تحديد الأسقف متاح للشهر الحالي"}
         </p>
       </div>
@@ -132,7 +183,7 @@ export default function BudgetSetup({
       {monthLockMessage && (
         <div className="rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-start">
           <p className="text-sm font-extrabold text-orange-700">
-            {monthRelation < 0 ? "الشهر ده عدى خلاص" : "شهر مستقبلي"}
+            {monthRelation < 0 ? "الشهر ده انتهى خلاص" : "شهر مستقبلي"}
           </p>
           <p className="mt-1 text-xs font-medium text-orange-700/90 leading-relaxed">
             {monthLockMessage}
@@ -142,10 +193,15 @@ export default function BudgetSetup({
 
       <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {categories.map((category) => {
+          const existing = budgetByCategoryId.get(category._id);
           const amount = effectiveAmount(category._id);
-          const hasBudget = amount > 0;
-          const isSaving = savingId === category._id && mutation.isPending;
-          const fieldsLocked = !canEditCaps || hasBudget || isSaving;
+          const budgetId =
+            existing?._id && isBudgetObjectId(existing._id)
+              ? existing._id
+              : null;
+          const canUpdate = Boolean(budgetId);
+          const isSaving = savingId === category._id && isMutating;
+          const fieldsLocked = !canEditCaps || isSaving;
 
           return (
             <li
@@ -156,12 +212,12 @@ export default function BudgetSetup({
                 <p className="text-sm font-extrabold text-text-main truncate">
                   {category.name}
                 </p>
-                {hasBudget && (
+                {amount > 0 && (
                   <p className="mt-0.5 text-[11px] font-bold text-primary">
                     محفوظ: {formatMoney(amount)}
                   </p>
                 )}
-                {!canEditCaps && !hasBudget && (
+                {!canEditCaps && amount <= 0 && (
                   <p className="mt-0.5 text-[11px] font-bold text-text-muted">
                     لم يُحدد سقف لهذا التصنيف
                   </p>
@@ -190,10 +246,10 @@ export default function BudgetSetup({
                   title={
                     !canEditCaps
                       ? monthRelation < 0
-                        ? "الشهر ده عدى خلاص"
+                        ? "الشهر ده انتهى خلاص"
                         : "الشهر لسه ما جاش"
-                      : hasBudget
-                        ? "تعديل الميزانية غير متاح بعد"
+                      : canUpdate
+                        ? "تحديث الميزانية"
                         : "حفظ الميزانية"
                   }
                   onClick={() => {
@@ -201,7 +257,7 @@ export default function BudgetSetup({
                       showAlert({
                         message:
                           monthRelation < 0
-                            ? "الشهر ده عدى خلاص — مش هتقدر تحدد ميزانية عليه"
+                            ? "الشهر ده انتهى خلاص — مش هتقدر تحدد ميزانية عليه"
                             : "تحديد الميزانية متاح للشهر الحالي فقط",
                         success: false,
                       });
@@ -216,23 +272,34 @@ export default function BudgetSetup({
                       });
                       return;
                     }
-                    setSavingId(category._id);
-                    mutation.mutate({
+
+                    const body = {
                       category: category._id,
                       amount: nextAmount,
                       month,
-                    });
+                    };
+
+                    setSavingId(category._id);
+
+                    if (budgetId) {
+                      updateMutation.mutate({ id: budgetId, body });
+                      return;
+                    }
+
+                    createMutation.mutate(body);
                   }}
                   className="shrink-0 rounded-xl bg-primary hover:bg-primary-hover text-text-inverse text-xs font-bold px-4 py-2.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   {isSaving
-                    ? "..."
+                    ? canUpdate
+                      ? "جاري التحديث..."
+                      : "جاري الحفظ..."
                     : !canEditCaps
                       ? monthRelation < 0
-                        ? "عدى"
+                        ? "انتهى"
                         : "قفل"
-                      : hasBudget
-                        ? "محفوظ"
+                      : canUpdate
+                        ? "تحديث"
                         : "حفظ"}
                 </button>
               </div>

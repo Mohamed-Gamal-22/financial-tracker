@@ -4,10 +4,11 @@
 "use no memo";
 
 import { useEffect, useId, useRef } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAlert } from "@/app/(auth)/alerts";
+import DayPickerField from "@/components/date/DayPickerField";
 import { getCategories } from "@/services/api/category";
 import { createTransaction } from "@/services/api/transaction";
 import { ApiError } from "@/services/api/types";
@@ -67,6 +68,7 @@ export default function CreateTransactionModal({
     handleSubmit,
     reset,
     setError,
+    control,
     formState: { errors },
   } = useForm<CreateTransactionFormValues, unknown, CreateTransactionInput>({
     defaultValues: {
@@ -118,6 +120,7 @@ export default function CreateTransactionModal({
         queryClient.invalidateQueries({ queryKey: ["transaction-summary"] }),
         queryClient.invalidateQueries({ queryKey: ["transaction-report"] }),
         queryClient.invalidateQueries({ queryKey: ["recent-transactions"] }),
+        queryClient.invalidateQueries({ queryKey: ["notifications"] }),
       ]);
       onClose();
     },
@@ -227,7 +230,18 @@ export default function CreateTransactionModal({
             <label htmlFor="tx-date" className="text-xs font-bold text-text-main block">
               التاريخ <span className="text-text-muted font-medium">(اختياري)</span>
             </label>
-            <input id="tx-date" type="date" className={inputClass} {...register("date")} />
+            <Controller
+              name="date"
+              control={control}
+              render={({ field }) => (
+                <DayPickerField
+                  id="tx-date"
+                  value={field.value ?? ""}
+                  onChange={field.onChange}
+                  placeholder="اختر التاريخ"
+                />
+              )}
+            />
             {errors.date && (
               <p className="text-accent-danger text-xs font-medium">{errors.date.message}</p>
             )}

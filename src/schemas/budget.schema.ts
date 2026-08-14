@@ -23,6 +23,11 @@ export const createBudgetSchema = z.object({
 export type CreateBudgetInput = z.infer<typeof createBudgetSchema>;
 export type CreateBudgetFormValues = z.input<typeof createBudgetSchema>;
 
+/** PATCH /budget/:id — same body shape as create. */
+export const updateBudgetSchema = createBudgetSchema;
+export type UpdateBudgetInput = CreateBudgetInput;
+export type UpdateBudgetFormValues = CreateBudgetFormValues;
+
 export type BudgetCategoryRef = {
   _id: string;
   name: string;
@@ -36,5 +41,4 @@ export type Budget = {
   month: string;
 };
 
-/** Form ready for future edit mode when PATCH arrives. */
 export type BudgetFormMode = "create" | "edit";

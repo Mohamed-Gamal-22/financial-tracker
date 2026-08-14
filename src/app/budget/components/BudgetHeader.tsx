@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import MonthPickerField from "@/components/date/MonthPickerField";
 import { currentYearMonth } from "@/lib/format";
 
 type BudgetHeaderProps = {
@@ -14,23 +14,6 @@ export default function BudgetHeader({
   month,
   onMonthChange,
 }: BudgetHeaderProps) {
-  const monthInputRef = useRef<HTMLInputElement>(null);
-
-  function openMonthPicker() {
-    const input = monthInputRef.current;
-    if (!input) return;
-    try {
-      if (typeof input.showPicker === "function") {
-        input.showPicker();
-        return;
-      }
-    } catch {
-      // Some browsers throw if showPicker isn't allowed; fall through to focus.
-    }
-    input.focus();
-    input.click();
-  }
-
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
       <div className="flex items-start gap-3 text-start">
@@ -56,34 +39,14 @@ export default function BudgetHeader({
         </div>
       </div>
 
-      <div
-        role="button"
-        tabIndex={0}
-        onClick={openMonthPicker}
-        onKeyDown={(event) => {
-          if (event.key === "Enter" || event.key === " ") {
-            event.preventDefault();
-            openMonthPicker();
-          }
-        }}
-        className="inline-flex items-center gap-2 self-start rounded-xl border border-card-border bg-surface px-3 py-2.5 text-sm font-bold text-text-main hover:bg-primary-tint/40 transition-colors cursor-pointer select-none"
-      >
-        <span className="text-text-muted font-medium text-xs pointer-events-none">
-          الشهر
-        </span>
-        <input
-          ref={monthInputRef}
-          type="month"
-          value={month || currentYearMonth()}
-          onChange={(event) => onMonthChange(event.target.value)}
-          onClick={(event) => {
-            event.stopPropagation();
-            openMonthPicker();
-          }}
-          className="bg-transparent text-sm font-bold text-text-main outline-none cursor-pointer min-w-[9.5rem]"
-          aria-label="اختيار شهر الميزانية"
-        />
-      </div>
+      <MonthPickerField
+        compact
+        compactLabel="الشهر"
+        value={month || currentYearMonth()}
+        onChange={onMonthChange}
+        placeholder="اختر الشهر"
+        className="self-start"
+      />
     </div>
   );
 }

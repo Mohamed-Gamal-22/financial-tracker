@@ -30,7 +30,8 @@ export function formatMoney(
   });
 
   if (!options?.withSign) {
-    return `${formatted} ج.م`;
+    const sign = amount < 0 ? "- " : "";
+    return `${sign}${formatted} ج.م`;
   }
 
   const type = options.type;
@@ -40,7 +41,7 @@ export function formatMoney(
   if (type === "expense") {
     return `- ${formatted} ج.م`;
   }
-  return `${formatted} ج.م`;
+  return `${amount < 0 ? "- " : ""}${formatted} ج.م`;
 }
 
 export function amountToneClass(type?: CategoryType) {

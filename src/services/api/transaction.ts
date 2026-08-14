@@ -1,4 +1,5 @@
 import { authedApiRequest } from "./authed-client";
+import { withLangQuery } from "./client";
 import type {
   CreateTransactionInput,
   ListTransactionsParams,
@@ -80,7 +81,7 @@ export function normalizeTransactionList(
   return { transactions, page, limit, total };
 }
 
-/** POST /transaction */
+/** POST /transaction — include lang so budget notifications are created in Arabic */
 export function createTransaction(body: CreateTransactionInput) {
   const payload: Record<string, string | number> = {
     title: body.title,
@@ -89,7 +90,7 @@ export function createTransaction(body: CreateTransactionInput) {
   };
   if (body.date) payload.date = body.date;
 
-  return authedApiRequest<Transaction>("/transaction", {
+  return authedApiRequest<Transaction>(withLangQuery("/transaction"), {
     method: "POST",
     body: JSON.stringify(payload),
   });
@@ -97,7 +98,9 @@ export function createTransaction(body: CreateTransactionInput) {
 
 /** DELETE /transaction/:id */
 export function deleteTransaction(id: string) {
-  return authedApiRequest(`/transaction/${id}`, { method: "DELETE" });
+  return authedApiRequest(withLangQuery(`/transaction/${id}`), {
+    method: "DELETE",
+  });
 }
 
 /** GET /transaction/:id */

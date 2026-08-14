@@ -2,6 +2,7 @@
 
 import type { CategoryType } from "@/schemas/category.schema";
 import { CATEGORY_TYPE_LABELS } from "@/schemas/category.schema";
+import MonthPickerField from "@/components/date/MonthPickerField";
 
 export type CategoryTypeFilter = "all" | CategoryType;
 
@@ -51,24 +52,15 @@ export default function TransactionsToolbar({
           );
         })}
 
-        <label className="inline-flex items-center gap-1.5 rounded-full border border-card-border bg-surface px-3 py-1.5 text-sm font-bold text-text-main">
-          <span className="text-text-muted font-medium text-xs">الشهر</span>
-          <input
-            type="month"
-            value={month}
-            onChange={(event) => onMonthChange(event.target.value)}
-            className="bg-transparent text-sm font-bold text-text-main outline-none cursor-pointer"
-          />
-          {month && (
-            <button
-              type="button"
-              onClick={() => onMonthChange("")}
-              className="text-xs font-bold text-primary hover:text-primary-hover cursor-pointer"
-            >
-              مسح
-            </button>
-          )}
-        </label>
+        <MonthPickerField
+          compact
+          compactLabel="الشهر"
+          value={month}
+          onChange={onMonthChange}
+          allowClear
+          placeholder="كل الشهور"
+          className="shrink-0"
+        />
       </div>
 
       <div className="relative w-full lg:w-64">

@@ -1,8 +1,10 @@
 import { authedApiRequest } from "./authed-client";
+import { withLangQuery } from "./client";
 import type {
   Budget,
   BudgetCategoryRef,
   CreateBudgetInput,
+  UpdateBudgetInput,
 } from "@/schemas/budget.schema";
 import type { CategoryType } from "@/schemas/category.schema";
 
@@ -140,27 +142,45 @@ function normalizeBudgets(data: unknown): Budget[] {
   return budgets;
 }
 
-/** POST /budget */
+function finalizeBudgetResponse(
+  response: Awaited<ReturnType<typeof authedApiRequest<unknown>>>,
+  body: CreateBudgetInput | UpdateBudgetInput,
+  fallbackId = "",
+) {
+  const normalized = normalizeBudgetItem(response.data);
+  return {
+    ...response,
+    data: normalized ?? {
+      _id: fallbackId,
+      category: body.category,
+      amount: body.amount,
+      month: body.month,
+    },
+  };
+}
+
+/** POST /budget — include lang so notifications are created in Arabic */
 export function createBudget(body: CreateBudgetInput) {
-  return authedApiRequest<unknown>("/budget", {
+  return authedApiRequest<unknown>(withLangQuery("/budget"), {
     method: "POST",
     body: JSON.stringify({
       category: body.category,
       amount: body.amount,
       month: body.month,
     }),
-  }).then((response) => {
-    const normalized = normalizeBudgetItem(response.data);
-    return {
-      ...response,
-      data: normalized ?? {
-        _id: "",
-        category: body.category,
-        amount: body.amount,
-        month: body.month,
-      },
-    };
-  });
+  }).then((response) => finalizeBudgetResponse(response, body));
+}
+
+/** PATCH /budget/:id */
+export function updateBudget(id: string, body: UpdateBudgetInput) {
+  return authedApiRequest<unknown>(withLangQuery(`/budget/${id}`), {
+    method: "PATCH",
+    body: JSON.stringify({
+      category: body.category,
+      amount: body.amount,
+      month: body.month,
+    }),
+  }).then((response) => finalizeBudgetResponse(response, body, id));
 }
 
 /** GET /budget?month=YYYY-MM */
