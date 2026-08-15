@@ -11,6 +11,7 @@ type DeleteTransactionDialogProps = {
   transactionId: string;
   transactionTitle: string;
   onClose: () => void;
+  onDeleted?: () => void;
 };
 
 export default function DeleteTransactionDialog({
@@ -18,6 +19,7 @@ export default function DeleteTransactionDialog({
   transactionId,
   transactionTitle,
   onClose,
+  onDeleted,
 }: DeleteTransactionDialogProps) {
   const titleId = useId();
   const descId = useId();
@@ -48,11 +50,14 @@ export default function DeleteTransactionDialog({
         status: response.status,
       });
       void queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      void queryClient.invalidateQueries({ queryKey: ["transactions-by-day"] });
+      void queryClient.invalidateQueries({ queryKey: ["transactions-count"] });
       void queryClient.invalidateQueries({ queryKey: ["transaction-summary"] });
       void queryClient.invalidateQueries({ queryKey: ["transaction-report"] });
       void queryClient.invalidateQueries({ queryKey: ["recent-transactions"] });
       void queryClient.invalidateQueries({ queryKey: ["notifications"] });
       setPending(false);
+      onDeleted?.();
       onClose();
     },
     onError: (error) => {

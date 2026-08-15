@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import AppSidebar from "@/components/AppSidebar";
 import DayPickerField from "@/components/date/DayPickerField";
 import MonthPickerField from "@/components/date/MonthPickerField";
+import { yearMonthFromPeriod } from "@/lib/date-value";
 import { useAlert } from "@/app/(auth)/alerts";
 import { getTransactionReport } from "@/services/api/transaction";
 import { ApiError } from "@/services/api/types";
@@ -200,7 +201,9 @@ export default function ReportsPage() {
                   render={({ field }) => (
                     <MonthPickerField
                       value={field.value ?? ""}
-                      onChange={field.onChange}
+                      onChange={(value) =>
+                        field.onChange(yearMonthFromPeriod(value) || value)
+                      }
                       placeholder="اختر الشهر"
                     />
                   )}

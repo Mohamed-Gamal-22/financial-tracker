@@ -83,6 +83,10 @@ export type TransactionListData = {
   page: number;
   limit: number;
   total: number;
+  /** True when another page is available (even if total is approximate). */
+  hasMore?: boolean;
+  /** True when `total` came from the API (not inferred from page size). */
+  totalReliable?: boolean;
 };
 
 export type SummaryCategoryRow = {

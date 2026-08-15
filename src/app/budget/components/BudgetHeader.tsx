@@ -1,6 +1,7 @@
 "use client";
 
 import MonthPickerField from "@/components/date/MonthPickerField";
+import { yearMonthFromPeriod } from "@/lib/date-value";
 import { currentYearMonth } from "@/lib/format";
 
 type BudgetHeaderProps = {
@@ -43,7 +44,9 @@ export default function BudgetHeader({
         compact
         compactLabel="الشهر"
         value={month || currentYearMonth()}
-        onChange={onMonthChange}
+        onChange={(value) =>
+          onMonthChange(yearMonthFromPeriod(value) || value)
+        }
         placeholder="اختر الشهر"
         className="self-start"
       />

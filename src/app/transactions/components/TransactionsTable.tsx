@@ -15,6 +15,7 @@ type TransactionsTableProps = {
   page: number;
   limit: number;
   total: number;
+  hasMore?: boolean;
   isLoading?: boolean;
   onPageChange: (page: number) => void;
   onOpenDetail: (id: string) => void;
@@ -32,6 +33,7 @@ export default function TransactionsTable({
   page,
   limit,
   total,
+  hasMore,
   isLoading,
   onPageChange,
   onOpenDetail,
@@ -39,7 +41,7 @@ export default function TransactionsTable({
 }: TransactionsTableProps) {
   const totalPages = Math.max(1, Math.ceil(total / limit));
   const canPrev = page > 1;
-  const canNext = page < totalPages;
+  const canNext = hasMore ?? page < totalPages;
 
   const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1).slice(
     Math.max(0, page - 3),
@@ -133,7 +135,9 @@ export default function TransactionsTable({
 
       <div className="border-t border-card-border/60 px-4 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <p className="text-xs font-bold text-text-muted">
-          صفحة {page} من {totalPages} — إجمالي {total} من المعاملات
+          إجمالي {total} معاملة — كل صفحة تعرض {limit}
+          {" · "}
+          صفحة {page} من {totalPages}
         </p>
         <div className="flex flex-wrap items-center gap-2">
           <button

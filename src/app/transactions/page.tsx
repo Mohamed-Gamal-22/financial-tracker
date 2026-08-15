@@ -3,8 +3,17 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import AppSidebar from "@/components/AppSidebar";
-import { listTransactions } from "@/services/api/transaction";
+import {
+  getTransactionsCount,
+  listTransactions,
+} from "@/services/api/transaction";
 import { ApiError } from "@/services/api/types";
+import {
+  isIsoDate,
+  normalizeTxDate,
+  yearMonthFromPeriod,
+} from "@/lib/date-value";
+import type { Transaction } from "@/schemas/transaction.schema";
 import TransactionsHeader from "./components/TransactionsHeader";
 import TransactionsToolbar, {
   type CategoryTypeFilter,
@@ -15,6 +24,34 @@ import DeleteTransactionDialog from "./components/DeleteTransactionDialog";
 import TransactionDetailModal from "./components/TransactionDetailModal";
 
 const LIMIT = 10;
+const DAY_FETCH_LIMIT = 100;
+
+async function fetchAllMonthTransactions(params: {
+  categoryType?: CategoryTypeFilter;
+  categoryName?: string;
+  month: string;
+}): Promise<Transaction[]> {
+  const all: Transaction[] = [];
+  let page = 1;
+
+  for (;;) {
+    const response = await listTransactions({
+      page,
+      limit: DAY_FETCH_LIMIT,
+      categoryType:
+        params.categoryType === "all" ? undefined : params.categoryType,
+      categoryName: params.categoryName || undefined,
+      month: params.month,
+    });
+    const chunk = response.data?.transactions ?? [];
+    all.push(...chunk);
+    if (!response.data?.hasMore || chunk.length === 0) break;
+    page += 1;
+    if (page > 50) break;
+  }
+
+  return all;
+}
 
 export default function TransactionsPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -27,9 +64,13 @@ export default function TransactionsPage() {
 
   const [page, setPage] = useState(1);
   const [categoryType, setCategoryType] = useState<CategoryTypeFilter>("all");
-  const [month, setMonth] = useState("");
+  /** YYYY-MM (month) or YYYY-MM-DD (day). */
+  const [period, setPeriod] = useState("");
   const [categoryNameInput, setCategoryNameInput] = useState("");
   const [categoryName, setCategoryName] = useState("");
+
+  const dayFilter = isIsoDate(period) ? period : "";
+  const monthFilter = yearMonthFromPeriod(period);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -42,31 +83,36 @@ export default function TransactionsPage() {
     return () => clearTimeout(timer);
   }, [categoryNameInput]);
 
-  const {
-    data,
-    isLoading,
-    isError,
-    error,
-    refetch,
-    isFetching,
-  } = useQuery({
-    queryKey: [
-      "transactions",
-      {
-        page,
-        limit: LIMIT,
+  const listFilters = {
+    categoryType,
+    categoryName,
+    period,
+  };
+
+  const dayQuery = useQuery({
+    queryKey: ["transactions-by-day", listFilters],
+    enabled: Boolean(dayFilter),
+    queryFn: async () => {
+      const all = await fetchAllMonthTransactions({
         categoryType,
         categoryName,
-        month,
-      },
-    ],
+        month: monthFilter,
+      });
+      return all.filter((tx) => normalizeTxDate(tx.date) === dayFilter);
+    },
+    placeholderData: (previous) => previous,
+  });
+
+  const monthQuery = useQuery({
+    queryKey: ["transactions", { page, limit: LIMIT, ...listFilters }],
+    enabled: !dayFilter,
     queryFn: async () => {
       const response = await listTransactions({
         page,
         limit: LIMIT,
         categoryType: categoryType === "all" ? undefined : categoryType,
         categoryName: categoryName || undefined,
-        month: month || undefined,
+        month: monthFilter || undefined,
       });
       return (
         response.data ?? {
@@ -74,15 +120,35 @@ export default function TransactionsPage() {
           page: 1,
           limit: LIMIT,
           total: 0,
+          hasMore: false,
+          totalReliable: true,
         }
       );
     },
     placeholderData: (previous) => previous,
   });
 
+  const {
+    data: totalCount = 0,
+    isSuccess: countReady,
+  } = useQuery({
+    queryKey: ["transactions-count", listFilters],
+    enabled: !dayFilter,
+    queryFn: () =>
+      getTransactionsCount({
+        categoryType: categoryType === "all" ? undefined : categoryType,
+        categoryName: categoryName || undefined,
+        month: monthFilter || undefined,
+      }),
+    staleTime: 30_000,
+  });
+
   function afterCreate() {
     setPage(1);
   }
+
+  const activeQuery = dayFilter ? dayQuery : monthQuery;
+  const { isLoading, isError, error, refetch, isFetching } = activeQuery;
 
   const errorMessage =
     error instanceof ApiError
@@ -91,9 +157,25 @@ export default function TransactionsPage() {
         ? error.message
         : "تعذر تحميل المعاملات";
 
-  const transactions = data?.transactions ?? [];
-  const total = data?.total ?? 0;
-  const currentPage = data?.page ?? page;
+  let transactions: Transaction[] = [];
+  let total = 0;
+  let hasMore = false;
+
+  if (dayFilter) {
+    const filtered = dayQuery.data ?? [];
+    total = filtered.length;
+    const start = (page - 1) * LIMIT;
+    transactions = filtered.slice(start, start + LIMIT);
+    hasMore = page * LIMIT < total;
+  } else {
+    transactions = monthQuery.data?.transactions ?? [];
+    total = countReady ? totalCount : (monthQuery.data?.total ?? 0);
+    const totalPages = Math.max(1, Math.ceil(total / LIMIT) || 1);
+    hasMore = countReady
+      ? page < totalPages
+      : (monthQuery.data?.hasMore ??
+        page * LIMIT < Math.max(total, page * LIMIT));
+  }
 
   return (
     <div className="min-h-screen flex relative text-text-main overflow-x-hidden font-sans bg-gradient-to-br from-bg-start to-bg-end">
@@ -121,9 +203,9 @@ export default function TransactionsPage() {
             }}
             categoryName={categoryNameInput}
             onCategoryNameChange={setCategoryNameInput}
-            month={month}
+            month={period}
             onMonthChange={(value) => {
-              setMonth(value);
+              setPeriod(value);
               setPage(1);
             }}
           />
@@ -143,10 +225,11 @@ export default function TransactionsPage() {
           ) : (
             <TransactionsTable
               transactions={transactions}
-              page={currentPage}
+              page={page}
               limit={LIMIT}
               total={total}
-              isLoading={isLoading}
+              hasMore={hasMore}
+              isLoading={isLoading || isFetching}
               onPageChange={setPage}
               onOpenDetail={setDetailId}
               onDelete={(id, title) => setDeleteTarget({ id, title })}
@@ -173,6 +256,7 @@ export default function TransactionsPage() {
         transactionId={deleteTarget?.id ?? ""}
         transactionTitle={deleteTarget?.title ?? ""}
         onClose={() => setDeleteTarget(null)}
+        onDeleted={() => setPage(1)}
       />
     </div>
   );

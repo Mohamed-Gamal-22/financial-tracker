@@ -117,6 +117,8 @@ export default function CreateTransactionModal({
       onCreated?.();
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["transactions"] }),
+        queryClient.invalidateQueries({ queryKey: ["transactions-by-day"] }),
+        queryClient.invalidateQueries({ queryKey: ["transactions-count"] }),
         queryClient.invalidateQueries({ queryKey: ["transaction-summary"] }),
         queryClient.invalidateQueries({ queryKey: ["transaction-report"] }),
         queryClient.invalidateQueries({ queryKey: ["recent-transactions"] }),

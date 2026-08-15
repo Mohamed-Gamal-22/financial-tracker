@@ -3,6 +3,7 @@
 import type { CategoryType } from "@/schemas/category.schema";
 import { CATEGORY_TYPE_LABELS } from "@/schemas/category.schema";
 import MonthPickerField from "@/components/date/MonthPickerField";
+import { isIsoDate } from "@/lib/date-value";
 
 export type CategoryTypeFilter = "all" | CategoryType;
 
@@ -54,7 +55,7 @@ export default function TransactionsToolbar({
 
         <MonthPickerField
           compact
-          compactLabel="الشهر"
+          compactLabel={isIsoDate(month) ? "اليوم" : "الشهر"}
           value={month}
           onChange={onMonthChange}
           allowClear
