@@ -22,6 +22,7 @@ import {
   updateNameSchema,
   type UpdateNameInput,
 } from "@/schemas/user.schema";
+import { FULLNAME_INVALID_MESSAGE } from "@/schemas/fullname.schema";
 import { USER_PROFILE_QUERY_FILTER } from "@/hooks/useUserProfile";
 
 type PersonalInfoSectionProps = {
@@ -175,8 +176,7 @@ export default function PersonalInfoSection({
 
     if (!parsed.success) {
       const message =
-        parsed.error.issues[0]?.message ||
-        "الاسم يجب أن يكون كلمتين إنجليزيتين أو أكثر مفصولتين بمسافة واحدة";
+        parsed.error.issues[0]?.message || FULLNAME_INVALID_MESSAGE;
       setError("fullname", { type: "manual", message });
       showAlert({ message, success: false, status: 400 });
       return;
@@ -203,7 +203,7 @@ export default function PersonalInfoSection({
     const message =
       parsed.error.issues[0]?.message ||
       formErrors.fullname?.message ||
-      "الاسم يجب أن يكون كلمتين إنجليزيتين أو أكثر مفصولتين بمسافة واحدة";
+      FULLNAME_INVALID_MESSAGE;
     showAlert({
       message,
       success: false,
@@ -248,7 +248,7 @@ export default function PersonalInfoSection({
                       type="text"
                       autoComplete="name"
                       disabled={saving}
-                      placeholder="First Last"
+                      placeholder="محمد أحمد أو First Last"
                       aria-busy={saving}
                       className={`${inputClass} disabled:opacity-70 disabled:cursor-not-allowed`}
                       name={field.name}
@@ -269,7 +269,7 @@ export default function PersonalInfoSection({
                   autoComplete="name"
                   readOnly
                   value={fullname}
-                  placeholder="First Last"
+                  placeholder="محمد أحمد أو First Last"
                   className={`${inputClass} pe-11 cursor-default`}
                 />
               )}
@@ -286,7 +286,7 @@ export default function PersonalInfoSection({
             </div>
             {editing ? (
               <p className="text-[11px] font-medium text-text-muted">
-                كلمتان إنجليزيتان أو أكثر، مفصولتان بمسافة واحدة
+                كلمتان على الأقل، عربي فقط أو إنجليزي فقط
               </p>
             ) : null}
             {errors.fullname ? (

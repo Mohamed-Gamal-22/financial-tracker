@@ -1,15 +1,10 @@
 import { z } from "zod";
+import { fullnameSchema } from "./fullname.schema";
 
 /** 1. POST /auth/signup */
 export const signupSchema = z
   .object({
-    fullname: z
-      .string()
-      .trim()
-      .regex(/^[A-Za-z]+ [A-Za-z]+$/, {
-        message:
-          "الاسم يجب أن يكون كلمتين فقط مفصولتين بمسافة واحدة، وبحروف إنجليزية فقط",
-      }),
+    fullname: fullnameSchema,
     email: z
       .string()
       .trim()
