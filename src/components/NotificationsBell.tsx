@@ -1,35 +1,19 @@
 "use client";
 
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
-import { useAuth } from "@/hooks/useAuth";
-import { useNotificationSeen } from "@/hooks/useNotificationSeen";
-import { getNotifications } from "@/services/api/notification";
-import { countUnreadNotifications } from "@/lib/notification-seen";
+import { useNotifications } from "@/hooks/useNotifications";
+import UnreadCountBadge from "@/components/UnreadCountBadge";
 import NotificationsList from "@/components/NotificationsList";
 import NotificationDetailModal from "@/components/NotificationDetailModal";
 
 export default function NotificationsBell() {
   const panelId = useId();
-  const { user } = useAuth();
-  const userKey = user?.id || user?.email || null;
   const rootRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
-  const { seenIds, markSeen } = useNotificationSeen(userKey);
-
-  const { data: items = [], isLoading, isError } = useQuery({
-    queryKey: ["notifications", "ar"],
-    queryFn: async () => (await getNotifications()).data ?? [],
-    staleTime: 60 * 1000,
-    refetchOnWindowFocus: true,
-  });
-
-  const unreadCount = useMemo(
-    () => countUnreadNotifications(items, seenIds),
-    [items, seenIds],
-  );
+  const { items, unreadCount, seenIds, markSeen, isLoading, isError } =
+    useNotifications();
 
   useEffect(() => {
     if (!open || detailId) return;
@@ -55,7 +39,9 @@ export default function NotificationsBell() {
       <div ref={rootRef} className="relative">
         <button
           type="button"
-          aria-label="التنبيهات"
+          aria-label={
+            unreadCount > 0 ? `التنبيهات، ${unreadCount} غير مقروءة` : "التنبيهات"
+          }
           aria-expanded={open}
           aria-controls={panelId}
           onClick={() => setOpen((prev) => !prev)}
@@ -64,11 +50,7 @@ export default function NotificationsBell() {
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
           </svg>
-          {unreadCount > 0 && (
-            <span className="absolute top-1 end-1 min-w-4 h-4 px-1 rounded-full bg-accent-danger text-text-inverse text-[10px] font-extrabold leading-4 text-center">
-              {unreadCount > 9 ? "9+" : unreadCount}
-            </span>
-          )}
+          <UnreadCountBadge count={unreadCount} className="absolute top-1 end-1" />
         </button>
 
         {open && (

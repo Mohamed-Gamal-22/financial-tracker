@@ -3,7 +3,9 @@
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
+import { useNotifications } from "@/hooks/useNotifications";
 import { useUserProfile } from "@/hooks/useUserProfile";
+import UnreadCountBadge from "@/components/UnreadCountBadge";
 import UserAvatar from "@/components/UserAvatar";
 
 export type SidebarItemId =
@@ -100,6 +102,7 @@ export default function AppSidebar({
 }: AppSidebarProps) {
   const { logout } = useAuth();
   const { displayName, profilePic } = useUserProfile();
+  const { unreadCount } = useNotifications();
   const [loggingOut, setLoggingOut] = useState(false);
   const profileActive = activeItem === "profile";
 
@@ -143,11 +146,17 @@ export default function AppSidebar({
         <nav className="px-4 pb-3 space-y-1 overflow-y-auto">
           {NAV_ITEMS.map((item) => {
             const active = activeItem === item.id;
+            const isAlerts = item.id === "alerts";
             return (
               <Link
                 key={item.id}
                 href={item.href}
                 onClick={onCloseMobile}
+                aria-label={
+                  isAlerts && unreadCount > 0
+                    ? `التنبيهات، ${unreadCount} غير مقروءة`
+                    : undefined
+                }
                 className={[
                   "flex items-center gap-3 rounded-xl border border-card-border px-3.5 py-2.5 text-sm font-bold transition-colors",
                   active
@@ -155,7 +164,15 @@ export default function AppSidebar({
                     : "text-text-main/80 hover:bg-primary-tint/50 hover:text-primary",
                 ].join(" ")}
               >
-                <span className={active ? "text-primary" : "text-text-muted"}>{item.icon}</span>
+                <span
+                  className={[
+                    "relative inline-flex",
+                    active ? "text-primary" : "text-text-muted",
+                  ].join(" ")}
+                >
+                  {item.icon}
+                  {isAlerts && <UnreadCountBadge count={unreadCount} />}
+                </span>
                 {item.label}
               </Link>
             );

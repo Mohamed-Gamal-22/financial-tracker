@@ -1,27 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import AppSidebar from "@/components/AppSidebar";
 import NotificationsList from "@/components/NotificationsList";
 import NotificationDetailModal from "@/components/NotificationDetailModal";
-import { useAuth } from "@/hooks/useAuth";
-import { useNotificationSeen } from "@/hooks/useNotificationSeen";
-import { getNotifications } from "@/services/api/notification";
+import { useNotifications } from "@/hooks/useNotifications";
 
 export default function NotificationsPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
-  const { user } = useAuth();
-  const userKey = user?.id || user?.email || null;
-  const { seenIds, markSeen } = useNotificationSeen(userKey);
-
-  const { data: items = [], isLoading, isError, refetch, isFetching } = useQuery({
-    queryKey: ["notifications", "ar"],
-    queryFn: async () => (await getNotifications()).data ?? [],
-    staleTime: 60 * 1000,
-    refetchOnWindowFocus: true,
-  });
+  const {
+    items,
+    seenIds,
+    markSeen,
+    isLoading,
+    isError,
+    refetch,
+    isFetching,
+  } = useNotifications();
 
   return (
     <div className="min-h-screen flex relative text-text-main overflow-x-hidden font-sans bg-gradient-to-br from-bg-start to-bg-end">
