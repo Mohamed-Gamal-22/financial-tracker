@@ -110,7 +110,7 @@ export default function CreateTransactionModal({
     mutationFn: createTransaction,
     onSuccess: async (response) => {
       showAlert({
-        message: response.message || "تم إضافة المعاملة بنجاح",
+        message: response.message,
         success: true,
         status: response.status,
       });

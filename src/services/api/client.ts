@@ -6,10 +6,9 @@ const BASE_URL =
 
 /**
  * App language for the API.
- * - Always sent as `Accept-Language`
- * - Notification endpoints also use `?lang=` (see docs)
- * Prefer Accept-Language for other routes: strict backends
- * (e.g. GET /transaction) reject unknown query params.
+ * - Always sent as `Accept-Language: ar`
+ * - `?lang=ar` only on endpoints that support it (via `withLangQuery`) —
+ *   strict routes like GET /transaction reject unknown query params.
  */
 export const API_LANG = "ar";
 
@@ -18,7 +17,7 @@ export type ApiRequestOptions = RequestInit & {
   accessToken?: string | null;
 };
 
-/** Append/override `lang` query for endpoints that support it (notifications). */
+/** Append/override `lang` query for endpoints that support it. */
 export function withLangQuery(path: string, lang: string = API_LANG) {
   const [pathname, existing = ""] = path.split("?", 2);
   const params = new URLSearchParams(existing);
@@ -77,9 +76,9 @@ export async function apiRequest<T>(
     delete headers["content-type"];
   }
 
-  if (!headers["Accept-Language"]?.trim()) {
-    headers["Accept-Language"] = API_LANG;
-  }
+  // Prefer Arabic messages; do not let callers drop the header.
+  delete headers["accept-language"];
+  headers["Accept-Language"] = API_LANG;
 
   if (accessToken) {
     headers.Authorization = `Bearer ${accessToken}`;
@@ -114,7 +113,7 @@ export async function apiRequest<T>(
 
   return {
     ...payload,
-    message: payload.message || "Done",
+    message: typeof payload.message === "string" ? payload.message : "",
     status: payload.status ?? response.status,
     success: true,
   };

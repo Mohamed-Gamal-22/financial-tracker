@@ -38,7 +38,7 @@ export default function FreezeAccountSection() {
     try {
       const response = await freezeAccount();
       showAlert({
-        message: response.message || "تم تجميد الحساب بنجاح",
+        message: response.message,
         success: true,
         status: response.status,
       });

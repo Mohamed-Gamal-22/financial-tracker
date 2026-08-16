@@ -1,4 +1,4 @@
-import { apiRequest } from "./client";
+import { apiRequest, withLangQuery } from "./client";
 import { authedApiRequest } from "./authed-client";
 import type { AuthTokens } from "@/services/auth/parse-login";
 import type { ApiResponse } from "./types";
@@ -173,15 +173,18 @@ export function rotateToken(refreshToken: string) {
   });
 }
 
-/** PATCH /user/name — body `{ fullname }`, Authorization: Bearer <access_token> */
+/** PATCH /user/name?lang=ar — body `{ fullname }` */
 export async function updateUserName(
   fullname: string,
 ): Promise<ApiResponse<UserProfile>> {
   const submitted = fullname.trim();
-  const response = await authedApiRequest<unknown>("/user/name", {
-    method: "PATCH",
-    body: JSON.stringify({ fullname: submitted }),
-  });
+  const response = await authedApiRequest<unknown>(
+    withLangQuery("/user/name"),
+    {
+      method: "PATCH",
+      body: JSON.stringify({ fullname: submitted }),
+    },
+  );
   const profile =
     normalizeUserProfile(response.data) ?? normalizeUserProfile(response);
 
@@ -192,22 +195,27 @@ export async function updateUserName(
       : submitted;
 
   return {
-    message: response.message || "Done",
+    message: typeof response.message === "string" ? response.message : "",
     success: response.success !== false,
     status: response.status ?? 200,
     data: profile
-      ? { ...profile, fullname: resolvedName }
+      ? {
+          _id: profile._id,
+          fullname: resolvedName,
+          email: profile.email,
+          // Omit null/empty pic so callers don't wipe cached avatars.
+          ...(profile.profilePic ? { profilePic: profile.profilePic } : {}),
+        }
       : {
           _id: "unknown",
           fullname: resolvedName,
           email: "",
-          profilePic: null,
         },
   };
 }
 
 /**
- * PATCH /user/profile-pic — multipart upload.
+ * PATCH /user/profile-pic?lang=ar — multipart upload.
  * Backend multer field is `file` (NestJS FileInterceptor). Docs mentioned
  * `profilePic`, but that returns Multer "Unexpected field".
  */
@@ -215,10 +223,13 @@ export async function uploadProfilePic(file: File) {
   const filename = guessProfilePicFilename(file);
   const formData = new FormData();
   formData.append("file", file, filename);
-  const response = await authedApiRequest<unknown>("/user/profile-pic", {
-    method: "PATCH",
-    body: formData,
-  });
+  const response = await authedApiRequest<unknown>(
+    withLangQuery("/user/profile-pic"),
+    {
+      method: "PATCH",
+      body: formData,
+    },
+  );
 
   let url =
     normalizeProfilePicUploadUrl(response.data) ??
@@ -247,7 +258,9 @@ function guessProfilePicFilename(file: File) {
   return "profile.jpg";
 }
 
-/** DELETE /user/profile-pic */
+/** DELETE /user/profile-pic?lang=ar */
 export function deleteProfilePic() {
-  return authedApiRequest("/user/profile-pic", { method: "DELETE" });
+  return authedApiRequest(withLangQuery("/user/profile-pic"), {
+    method: "DELETE",
+  });
 }

@@ -45,7 +45,7 @@ export default function DeleteTransactionDialog({
     mutationFn: () => deleteTransaction(transactionId),
     onSuccess: (response) => {
       showAlert({
-        message: response.message || "تم حذف المعاملة بنجاح",
+        message: response.message,
         success: true,
         status: response.status,
       });

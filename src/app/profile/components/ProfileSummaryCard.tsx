@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState, type ChangeEvent } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import UserAvatar from "@/components/UserAvatar";
-import { useAlert } from "@/app/(auth)/alerts";
+import { apiAlertMessage, useAlert } from "@/app/(auth)/alerts";
 import {
   deleteProfilePic,
   uploadProfilePic,
@@ -116,7 +116,10 @@ export default function ProfileSummaryCard({
       }
 
       showAlert({
-        message: response.message || "تم تحديث صورة الحساب",
+        message: apiAlertMessage(
+          response.message,
+          "تم تحديث صورة الحساب بنجاح",
+        ),
         success: true,
         status: response.status,
       });
@@ -139,7 +142,10 @@ export default function ProfileSummaryCard({
       syncProfilePicCache(queryClient, null);
       setDeleteOpen(false);
       showAlert({
-        message: response.message || "تم حذف صورة الحساب",
+        message: apiAlertMessage(
+          response.message,
+          "تم حذف صورة الحساب بنجاح",
+        ),
         success: true,
         status: response.status,
       });

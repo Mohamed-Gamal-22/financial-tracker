@@ -119,7 +119,7 @@ export default function BudgetSetup({
       await afterSave(
         variables.category,
         savedAmount,
-        response.message || "تم حفظ الميزانية بنجاح",
+        response.message,
         response.status,
       );
     },
@@ -143,7 +143,7 @@ export default function BudgetSetup({
       await afterSave(
         variables.body.category,
         savedAmount,
-        response.message || "تم تحديث الميزانية بنجاح",
+        response.message,
         response.status,
       );
     },

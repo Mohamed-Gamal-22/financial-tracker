@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useMemo, useState } from "react";
 import { AlertToast, type AlertItem } from "./Alert";
+import { normalizeAlertMessage } from "./normalizeAlertMessage";
 
 type AlertPayload = {
   message: string;
@@ -31,7 +32,7 @@ export function AlertProvider({ children }: { children: React.ReactNode }) {
       ...prev,
       {
         id,
-        message: payload.message,
+        message: normalizeAlertMessage(payload.message ?? ""),
         success: payload.success,
         status: payload.status,
       },

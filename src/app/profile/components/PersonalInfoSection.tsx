@@ -38,12 +38,6 @@ function sameName(a: string, b: string) {
     b.trim().replace(/\s+/g, " ").toLowerCase();
 }
 
-function nameUpdateAlertMessage(message?: string) {
-  const raw = message?.trim();
-  if (!raw || /^done$/i.test(raw)) return "تم تحديث الاسم بنجاح";
-  return raw;
-}
-
 function patchProfileNameCache(
   queryClient: ReturnType<typeof useQueryClient>,
   next: Partial<UserProfile> & { fullname: string },
@@ -56,13 +50,20 @@ function patchProfileNameCache(
           _id: next._id || "unknown",
           fullname: next.fullname,
           email: next.email || "",
-          profilePic: next.profilePic ?? null,
+          // Keep null only when we truly have no prior cache — never invent a wipe.
+          profilePic: next.profilePic || null,
         };
       }
+
+      // Name update responses often omit profilePic (or send null). Preserve the
+      // existing avatar so navbar/profile don't flash empty until reload.
+      const nextPic = next.profilePic?.trim();
       return {
         ...prev,
-        ...next,
         fullname: next.fullname,
+        ...(next._id ? { _id: next._id } : {}),
+        ...(next.email ? { email: next.email } : {}),
+        ...(nextPic ? { profilePic: nextPic } : {}),
       };
     },
   );
@@ -113,12 +114,10 @@ export default function PersonalInfoSection({
       const apiName = response.data?.fullname?.trim();
       const nextName =
         apiName && sameName(apiName, submittedName) ? apiName : submittedName;
-      const patch: Partial<UserProfile> & { fullname: string } = {
-        ...(response.data ?? {}),
-        fullname: nextName,
-      };
 
-      patchProfileNameCache(queryClient, patch);
+      // Only patch the name — do not spread the whole PATCH payload (it often
+      // omits/nulls profilePic and would wipe avatars app-wide).
+      patchProfileNameCache(queryClient, { fullname: nextName });
 
       try {
         await update({ fullname: nextName });
@@ -127,10 +126,11 @@ export default function PersonalInfoSection({
       }
 
       await queryClient.invalidateQueries(USER_PROFILE_QUERY_FILTER);
-      patchProfileNameCache(queryClient, patch);
+      // Re-assert name while refetch settles; still never touch profilePic here.
+      patchProfileNameCache(queryClient, { fullname: nextName });
 
       showAlert({
-        message: nameUpdateAlertMessage(response.message),
+        message: response.message,
         success: response.success !== false,
         status: response.status ?? 200,
       });
@@ -248,7 +248,7 @@ export default function PersonalInfoSection({
                       type="text"
                       autoComplete="name"
                       disabled={saving}
-                      placeholder="محمد أحمد أو First Last"
+                      placeholder="مثال: محمد احمد"
                       aria-busy={saving}
                       className={`${inputClass} disabled:opacity-70 disabled:cursor-not-allowed`}
                       name={field.name}
@@ -269,7 +269,7 @@ export default function PersonalInfoSection({
                   autoComplete="name"
                   readOnly
                   value={fullname}
-                  placeholder="محمد أحمد أو First Last"
+                  placeholder="مثال: محمد احمد"
                   className={`${inputClass} pe-11 cursor-default`}
                 />
               )}

@@ -90,7 +90,7 @@ export default function SignupForm({ onSuccess }: SignupFormProps) {
           </div>
           <input
             type="text"
-            placeholder="محمد أحمد أو First Last"
+            placeholder="مثال: محمد احمد"
             className={inputClass}
             autoComplete="name"
             {...register("fullname")}
