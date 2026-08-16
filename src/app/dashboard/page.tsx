@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import AppSidebar from "@/components/AppSidebar";
+import MonthPickerField from "@/components/date/MonthPickerField";
+import { yearMonthFromPeriod } from "@/lib/date-value";
+import { currentYearMonth } from "@/lib/format";
 import DashboardTopBar from "./components/DashboardTopBar";
 import DashboardStats from "./components/DashboardStats";
 import SpendingChart from "./components/SpendingChart";
@@ -11,6 +14,7 @@ import BudgetAlerts from "./components/BudgetAlerts";
 
 export default function DashboardPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [month, setMonth] = useState(currentYearMonth);
 
   return (
     <div className="min-h-screen flex relative text-text-main overflow-x-hidden font-sans bg-gradient-to-br from-bg-start to-bg-end">
@@ -27,16 +31,29 @@ export default function DashboardPage() {
         <DashboardTopBar onOpenSidebar={() => setSidebarOpen(true)} />
 
         <div className="max-w-6xl mx-auto space-y-5 sm:space-y-6 pb-8">
-          <DashboardStats />
+          <div className="flex justify-end">
+            <MonthPickerField
+              compact
+              monthOnly
+              compactLabel="الشهر"
+              value={month}
+              onChange={(value) =>
+                setMonth(yearMonthFromPeriod(value) || value)
+              }
+              placeholder="اختر الشهر"
+            />
+          </div>
+
+          <DashboardStats month={month} />
 
           <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,0.85fr)] gap-5">
-            <SpendingChart />
-            <ExpenseCategories />
+            <SpendingChart month={month} />
+            <ExpenseCategories month={month} />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,0.85fr)] gap-5">
-            <RecentTransactions />
-            <BudgetAlerts />
+            <RecentTransactions month={month} />
+            <BudgetAlerts month={month} />
           </div>
         </div>
       </main>

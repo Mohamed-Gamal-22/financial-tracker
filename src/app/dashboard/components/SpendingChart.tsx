@@ -13,12 +13,23 @@ import {
 import { Bar, Doughnut } from "react-chartjs-2";
 import { useQuery } from "@tanstack/react-query";
 import { getTransactionSummary } from "@/services/api/transaction";
-import { formatMoney, sumTotals } from "@/lib/format";
+import { currentYearMonth, formatMoney, sumTotals } from "@/lib/format";
 
 ChartJS.register(ArcElement, CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 
 const LABELS = ["دخل", "مصروف", "ادخار"];
 const COLORS = ["#22c55e", "#ef4444", "#38bdf8"];
+
+function monthLabel(month: string) {
+  return month === currentYearMonth() ? "هذا الشهر" : month;
+}
+
+function emptyChartMessage(month: string) {
+  if (month === currentYearMonth()) {
+    return "لا توجد بيانات لهذا الشهر";
+  }
+  return `لا توجد بيانات لـ ${month}`;
+}
 
 const sharedTooltip = {
   callbacks: {
@@ -75,10 +86,10 @@ const barOptions: ChartOptions<"bar"> = {
   },
 };
 
-export default function SpendingChart() {
+export default function SpendingChart({ month }: { month: string }) {
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["transaction-summary"],
-    queryFn: async () => (await getTransactionSummary()).data,
+    queryKey: ["transaction-summary", month],
+    queryFn: async () => (await getTransactionSummary(month)).data,
   });
 
   const income = sumTotals(data?.income);
@@ -106,7 +117,7 @@ export default function SpendingChart() {
       <div className="flex items-center justify-between gap-3 mb-5">
         <h2 className="text-base font-extrabold text-text-main">تحليل الإنفاق</h2>
         <span className="inline-flex items-center rounded-lg border border-card-border bg-primary-tint/40 px-3 py-1.5 text-xs font-bold text-text-main">
-          هذا الشهر
+          {monthLabel(month)}
         </span>
       </div>
 
@@ -115,7 +126,7 @@ export default function SpendingChart() {
       ) : isError ? (
         <p className="text-sm font-bold text-accent-danger py-16 text-center">تعذر تحميل التحليل</p>
       ) : !hasData ? (
-        <p className="text-sm font-bold text-text-muted py-16 text-center">لا توجد بيانات لهذا الشهر</p>
+        <p className="text-sm font-bold text-text-muted py-16 text-center">{emptyChartMessage(month)}</p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-stretch">
           <div className="h-52 sm:h-56">

@@ -2,14 +2,21 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { getTransactionSummary } from "@/services/api/transaction";
-import { formatMoney, sumTotals } from "@/lib/format";
+import { currentYearMonth, formatMoney, sumTotals } from "@/lib/format";
 
 const COLORS = ["bg-primary", "bg-accent-success", "bg-sky", "bg-purple", "bg-orange-400"];
 
-export default function ExpenseCategories() {
+function emptyExpensesMessage(month: string) {
+  if (month === currentYearMonth()) {
+    return "لا توجد مصروفات هذا الشهر";
+  }
+  return `لا توجد مصروفات لـ ${month}`;
+}
+
+export default function ExpenseCategories({ month }: { month: string }) {
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["transaction-summary"],
-    queryFn: async () => (await getTransactionSummary()).data,
+    queryKey: ["transaction-summary", month],
+    queryFn: async () => (await getTransactionSummary(month)).data,
   });
 
   const rows = data?.expense ?? [];
@@ -35,7 +42,7 @@ export default function ExpenseCategories() {
       ) : isError ? (
         <p className="text-sm font-bold text-accent-danger">تعذر تحميل الملخص</p>
       ) : legend.length === 0 ? (
-        <p className="text-sm font-bold text-text-muted">لا توجد مصروفات هذا الشهر</p>
+        <p className="text-sm font-bold text-text-muted">{emptyExpensesMessage(month)}</p>
       ) : (
         <div className="flex flex-col gap-4">
           <p className="text-sm font-bold text-text-muted">

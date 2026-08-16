@@ -42,6 +42,7 @@ export default function BudgetHeader({
 
       <MonthPickerField
         compact
+        monthOnly
         compactLabel="الشهر"
         value={month || currentYearMonth()}
         onChange={(value) =>

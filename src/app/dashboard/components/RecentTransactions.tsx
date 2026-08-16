@@ -10,11 +10,11 @@ import {
   resolveCategory,
 } from "@/lib/format";
 
-export default function RecentTransactions() {
+export default function RecentTransactions({ month }: { month: string }) {
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["recent-transactions"],
+    queryKey: ["recent-transactions", month],
     queryFn: async () => {
-      const response = await listTransactions({ page: 1, limit: 5 });
+      const response = await listTransactions({ page: 1, limit: 5, month });
       return response.data?.transactions ?? [];
     },
   });

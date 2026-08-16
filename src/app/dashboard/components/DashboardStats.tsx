@@ -4,10 +4,10 @@ import { useQuery } from "@tanstack/react-query";
 import { getTransactionSummary } from "@/services/api/transaction";
 import { formatMoney, sumTotals } from "@/lib/format";
 
-export default function DashboardStats() {
+export default function DashboardStats({ month }: { month: string }) {
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["transaction-summary"],
-    queryFn: async () => (await getTransactionSummary()).data,
+    queryKey: ["transaction-summary", month],
+    queryFn: async () => (await getTransactionSummary(month)).data,
   });
 
   const income = sumTotals(data?.income);

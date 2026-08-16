@@ -35,6 +35,8 @@ type MonthPickerFieldProps = {
   disabled?: boolean;
   compact?: boolean;
   compactLabel?: string;
+  /** Hide "بالأيام" and only allow picking a month (YYYY-MM). */
+  monthOnly?: boolean;
 };
 
 export default function MonthPickerField({
@@ -47,13 +49,14 @@ export default function MonthPickerField({
   disabled = false,
   compact = false,
   compactLabel,
+  monthOnly = false,
 }: MonthPickerFieldProps) {
   const panelId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<PickerMode>("month");
 
-  const selectedDay = parseIsoDate(value);
+  const selectedDay = monthOnly ? undefined : parseIsoDate(value);
   const selectedMonth =
     parseYearMonth(value) ??
     (selectedDay ? parseYearMonth(toYearMonth(selectedDay)) : undefined);
@@ -125,7 +128,11 @@ export default function MonthPickerField({
         aria-controls={panelId}
         onClick={() =>
           setOpen((prev) => {
-            if (!prev) setMode(isIsoDate(value) ? "days" : "month");
+            if (!prev) {
+              setMode(
+                monthOnly ? "month" : isIsoDate(value) ? "days" : "month",
+              );
+            }
             return !prev;
           })
         }
@@ -194,36 +201,38 @@ export default function MonthPickerField({
         <div
           id={panelId}
           role="dialog"
-          aria-label="اختيار الشهر أو اليوم"
+          aria-label={monthOnly ? "اختيار الشهر" : "اختيار الشهر أو اليوم"}
           className="absolute z-50 mt-2 end-0 min-w-[17rem] rounded-2xl border border-card-border bg-surface shadow-xl p-3"
         >
-          <div className="mb-3 grid grid-cols-2 gap-1 rounded-xl bg-primary-tint/50 p-1">
-            {(
-              [
-                { id: "month", label: "شهر فقط" },
-                { id: "days", label: "بالأيام" },
-              ] as const
-            ).map((tab) => {
-              const active = mode === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setMode(tab.id)}
-                  className={[
-                    "rounded-lg px-2 py-1.5 text-xs font-extrabold transition-colors cursor-pointer",
-                    active
-                      ? "bg-surface text-primary shadow-sm"
-                      : "text-text-muted hover:text-text-main",
-                  ].join(" ")}
-                >
-                  {tab.label}
-                </button>
-              );
-            })}
-          </div>
+          {!monthOnly && (
+            <div className="mb-3 grid grid-cols-2 gap-1 rounded-xl bg-primary-tint/50 p-1">
+              {(
+                [
+                  { id: "month", label: "شهر فقط" },
+                  { id: "days", label: "بالأيام" },
+                ] as const
+              ).map((tab) => {
+                const active = mode === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setMode(tab.id)}
+                    className={[
+                      "rounded-lg px-2 py-1.5 text-xs font-extrabold transition-colors cursor-pointer",
+                      active
+                        ? "bg-surface text-primary shadow-sm"
+                        : "text-text-muted hover:text-text-main",
+                    ].join(" ")}
+                  >
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
-          {mode === "month" ? (
+          {monthOnly || mode === "month" ? (
             <>
               <div className="flex items-center justify-between gap-2 mb-3">
                 <button

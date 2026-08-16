@@ -29,9 +29,14 @@ function statusFor(percent: number) {
   };
 }
 
-export default function BudgetAlerts() {
-  const month = currentYearMonth();
+function emptyBudgetsMessage(month: string) {
+  if (month === currentYearMonth()) {
+    return "لا توجد ميزانيات لهذا الشهر";
+  }
+  return `لا توجد ميزانيات لـ ${month}`;
+}
 
+export default function BudgetAlerts({ month }: { month: string }) {
   const {
     data: budgets = [],
     isLoading: budgetsLoading,
@@ -103,17 +108,9 @@ export default function BudgetAlerts() {
       ) : isError ? (
         <p className="text-sm font-bold text-accent-danger">تعذر تحميل التنبيهات</p>
       ) : alerts.length === 0 ? (
-        <div className="space-y-3">
-          <p className="text-sm font-bold text-text-muted">
-            لا توجد ميزانيات لهذا الشهر
-          </p>
-          <Link
-            href="/budget"
-            className="inline-flex items-center justify-center rounded-xl bg-primary hover:bg-primary-hover text-text-inverse text-xs font-bold px-4 py-2 transition-colors"
-          >
-            إضافة ميزانية
-          </Link>
-        </div>
+        <p className="text-sm font-bold text-text-muted">
+          {emptyBudgetsMessage(month)}
+        </p>
       ) : (
         <div className="space-y-5">
           {alerts.map((alert) => (
