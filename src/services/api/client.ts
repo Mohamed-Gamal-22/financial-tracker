@@ -116,7 +116,7 @@ export async function apiRequest<T>(
     ...payload,
     message: payload.message || "Done",
     status: payload.status ?? response.status,
-    success: payload.success !== false,
+    success: true,
   };
 }
 
