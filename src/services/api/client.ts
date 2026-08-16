@@ -27,31 +27,56 @@ export function withLangQuery(path: string, lang: string = API_LANG) {
   return qs ? `${pathname}?${qs}` : pathname;
 }
 
+function isFormDataBody(body: BodyInit | null | undefined): body is FormData {
+  if (body == null || typeof body !== "object") return false;
+  if (typeof FormData !== "undefined" && body instanceof FormData) return true;
+  return Object.prototype.toString.call(body) === "[object FormData]";
+}
+
+/** Clone FormData so a 401 retry can resend the same upload. */
+export function cloneFormData(source: FormData): FormData {
+  const next = new FormData();
+  source.forEach((value, key) => {
+    // Preserve File filename — dropping it can break multer parsers.
+    if (typeof File !== "undefined" && value instanceof File) {
+      next.append(key, value, value.name);
+    } else {
+      next.append(key, value);
+    }
+  });
+  return next;
+}
+
 export async function apiRequest<T>(
   path: string,
   options: ApiRequestOptions = {},
 ): Promise<ApiResponse<T>> {
-  const { accessToken, headers: initHeaders, ...rest } = options;
+  const { accessToken, headers: initHeaders, body, ...rest } = options;
+  const formData = isFormDataBody(body);
 
+  // Plain object for multipart — some browsers mishandle FormData when
+  // Content-Type is present on a Headers instance.
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    // Prefer Arabic; keep a quality list some i18n middlewares expect.
-    "Accept-Language": `${API_LANG}, ar-EG;q=0.9, en;q=0.1`,
+    "Accept-Language": API_LANG,
   };
 
-  if (initHeaders instanceof Headers) {
-    initHeaders.forEach((value, key) => {
-      headers[key] = value;
-    });
-  } else if (Array.isArray(initHeaders)) {
-    for (const [key, value] of initHeaders) {
-      headers[key] = value;
-    }
-  } else if (initHeaders) {
-    Object.assign(headers, initHeaders);
+  if (!formData) {
+    headers["Content-Type"] = "application/json";
   }
 
-  // Ensure language is not accidentally overridden to empty/missing.
+  if (initHeaders) {
+    const extra = new Headers(initHeaders);
+    extra.forEach((value, key) => {
+      if (formData && key.toLowerCase() === "content-type") return;
+      headers[key] = value;
+    });
+  }
+
+  if (formData) {
+    delete headers["Content-Type"];
+    delete headers["content-type"];
+  }
+
   if (!headers["Accept-Language"]?.trim()) {
     headers["Accept-Language"] = API_LANG;
   }
@@ -62,6 +87,7 @@ export async function apiRequest<T>(
 
   const response = await fetch(`${BASE_URL}${path}`, {
     ...rest,
+    body,
     headers,
   });
 
@@ -86,7 +112,12 @@ export async function apiRequest<T>(
     });
   }
 
-  return payload;
+  return {
+    ...payload,
+    message: payload.message || "Done",
+    status: payload.status ?? response.status,
+    success: payload.success !== false,
+  };
 }
 
 export { BASE_URL };

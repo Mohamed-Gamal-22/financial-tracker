@@ -3,6 +3,8 @@
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserProfile } from "@/hooks/useUserProfile";
+import UserAvatar from "@/components/UserAvatar";
 
 export type SidebarItemId =
   | "home"
@@ -10,7 +12,8 @@ export type SidebarItemId =
   | "categories"
   | "reports"
   | "budget"
-  | "alerts";
+  | "alerts"
+  | "profile";
 
 type AppSidebarProps = {
   activeItem?: SidebarItemId;
@@ -96,7 +99,9 @@ export default function AppSidebar({
   onCloseMobile,
 }: AppSidebarProps) {
   const { logout } = useAuth();
+  const { displayName, profilePic } = useUserProfile();
   const [loggingOut, setLoggingOut] = useState(false);
+  const profileActive = activeItem === "profile";
 
   async function handleLogout() {
     if (loggingOut) return;
@@ -135,7 +140,7 @@ export default function AppSidebar({
           </Link>
         </div>
 
-        <nav className="flex-1 px-4 pb-6 space-y-1 overflow-y-auto">
+        <nav className="px-4 pb-3 space-y-1 overflow-y-auto">
           {NAV_ITEMS.map((item) => {
             const active = activeItem === item.id;
             return (
@@ -144,9 +149,9 @@ export default function AppSidebar({
                 href={item.href}
                 onClick={onCloseMobile}
                 className={[
-                  "flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-bold transition-colors",
+                  "flex items-center gap-3 rounded-xl border border-card-border px-3.5 py-2.5 text-sm font-bold transition-colors",
                   active
-                    ? "bg-primary-tint text-primary"
+                    ? "bg-primary-tint text-primary border-primary/30"
                     : "text-text-main/80 hover:bg-primary-tint/50 hover:text-primary",
                 ].join(" ")}
               >
@@ -155,8 +160,30 @@ export default function AppSidebar({
               </Link>
             );
           })}
+        </nav>
 
-          <div className="border-t border-card-border/60 my-2" />
+        <div className="mx-4 border-t border-card-border" />
+
+        <div className="px-4 pt-3 pb-5 space-y-1">
+          <Link
+            href="/profile"
+            onClick={onCloseMobile}
+            aria-current={profileActive ? "page" : undefined}
+            className={[
+              "flex items-center gap-3 rounded-xl border border-card-border px-3.5 py-2.5 text-sm font-bold transition-colors",
+              profileActive
+                ? "bg-primary-tint text-primary border-primary/30"
+                : "text-text-main/80 hover:bg-primary-tint/50 hover:text-primary",
+            ].join(" ")}
+          >
+            <UserAvatar
+              name={displayName}
+              imageUrl={profilePic}
+              size="sm"
+              className="h-5 w-5 text-[9px] shadow-none ring-2 ring-card-border ring-offset-2 ring-offset-surface"
+            />
+            الملف الشخصي
+          </Link>
 
           <button
             type="button"
@@ -169,7 +196,7 @@ export default function AppSidebar({
             </svg>
             {loggingOut ? "جاري الخروج..." : "تسجيل الخروج"}
           </button>
-        </nav>
+        </div>
       </aside>
     </>
   );

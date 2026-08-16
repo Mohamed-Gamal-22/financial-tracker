@@ -1,5 +1,6 @@
 type UserAvatarProps = {
   name: string;
+  imageUrl?: string | null;
   size?: "sm" | "md" | "lg";
   className?: string;
 };
@@ -17,21 +18,32 @@ function initialsFromName(name: string) {
   return `${parts[0][0] ?? ""}${parts[1][0] ?? ""}`.toUpperCase();
 }
 
-/** Dummy avatar built from user initials (no external image dependency). */
+/** Avatar from profile image URL, or initials fallback. */
 export default function UserAvatar({
   name,
+  imageUrl,
   size = "sm",
   className = "",
 }: UserAvatarProps) {
+  const baseClass = [
+    "inline-flex shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-sky to-purple font-extrabold text-white shadow-sm overflow-hidden",
+    sizeClass[size],
+    className,
+  ].join(" ");
+
+  if (imageUrl) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element -- remote Cloudinary URLs; no next/image remotePatterns yet
+      <img
+        src={imageUrl}
+        alt={name ? `صورة ${name}` : "صورة الحساب"}
+        className={`${baseClass} object-cover`}
+      />
+    );
+  }
+
   return (
-    <span
-      className={[
-        "inline-flex shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-sky to-purple font-extrabold text-white shadow-sm",
-        sizeClass[size],
-        className,
-      ].join(" ")}
-      aria-hidden
-    >
+    <span className={baseClass} aria-hidden>
       {initialsFromName(name)}
     </span>
   );

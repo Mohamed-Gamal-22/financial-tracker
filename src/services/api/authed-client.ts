@@ -3,7 +3,7 @@ import { clearLegacyAuthStorage } from "@/services/auth/session-utils";
 import { shouldRotateAccessToken } from "@/services/auth/token-expiry";
 import { forceSessionTokenRotate } from "@/services/auth/force-session-rotate";
 import { getSession, signOut } from "next-auth/react";
-import { apiRequest, type ApiRequestOptions } from "./client";
+import { apiRequest, cloneFormData, type ApiRequestOptions } from "./client";
 import { ApiError, type ApiResponse } from "./types";
 
 /** Deduplicate concurrent rotate/refresh calls from parallel API requests. */
@@ -83,9 +83,15 @@ export async function authedApiRequest<T>(
     throw new Error("يجب تسجيل الدخول أولاً");
   }
 
+  const buildBody = () =>
+    typeof FormData !== "undefined" && options.body instanceof FormData
+      ? cloneFormData(options.body)
+      : options.body;
+
   try {
     return await apiRequest<T>(path, {
       ...options,
+      body: buildBody(),
       accessToken,
     });
   } catch (error) {
@@ -105,6 +111,7 @@ export async function authedApiRequest<T>(
 
     return apiRequest<T>(path, {
       ...options,
+      body: buildBody(),
       accessToken: freshToken,
     });
   }

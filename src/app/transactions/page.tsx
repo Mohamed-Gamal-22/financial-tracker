@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useSearchParams } from "next/navigation";
 import AppSidebar from "@/components/AppSidebar";
 import {
   getTransactionsCount,
@@ -54,6 +55,23 @@ async function fetchAllMonthTransactions(params: {
 }
 
 export default function TransactionsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-bg-start to-bg-end">
+          <p className="text-sm font-bold text-text-muted">جاري التحميل...</p>
+        </div>
+      }
+    >
+      <TransactionsPageContent />
+    </Suspense>
+  );
+}
+
+function TransactionsPageContent() {
+  const searchParams = useSearchParams();
+  const initialQuery = (searchParams.get("q") ?? searchParams.get("categoryName") ?? "").trim();
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
@@ -66,11 +84,18 @@ export default function TransactionsPage() {
   const [categoryType, setCategoryType] = useState<CategoryTypeFilter>("all");
   /** YYYY-MM (month) or YYYY-MM-DD (day). */
   const [period, setPeriod] = useState("");
-  const [categoryNameInput, setCategoryNameInput] = useState("");
-  const [categoryName, setCategoryName] = useState("");
+  const [categoryNameInput, setCategoryNameInput] = useState(initialQuery);
+  const [categoryName, setCategoryName] = useState(initialQuery);
 
   const dayFilter = isIsoDate(period) ? period : "";
   const monthFilter = yearMonthFromPeriod(period);
+
+  useEffect(() => {
+    const next = (searchParams.get("q") ?? searchParams.get("categoryName") ?? "").trim();
+    setCategoryNameInput(next);
+    setCategoryName(next);
+    setPage(1);
+  }, [searchParams]);
 
   useEffect(() => {
     const timer = setTimeout(() => {

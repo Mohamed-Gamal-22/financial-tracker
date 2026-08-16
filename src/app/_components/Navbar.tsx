@@ -3,14 +3,16 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import UserAvatar from "@/components/UserAvatar";
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, isAuthenticated, isLoading } = useAuth();
+  const { displayName, profilePic } = useUserProfile();
   const loggedIn = !isLoading && isAuthenticated && user;
   const homeHref = loggedIn ? "/dashboard" : "/";
-  const fullname = user?.fullname || "";
+  const fullname = displayName !== "مستخدم" ? displayName : user?.fullname || "";
 
   return (
     <header className="fixed top-0 z-50 w-full bg-white border-b border-card-border/60  transition-all">
@@ -44,7 +46,12 @@ export default function Navbar() {
               <span className="text-sm font-bold text-text-main max-w-[160px] truncate">
                 {fullname}
               </span>
-              <UserAvatar name={fullname} size="sm" />
+              <UserAvatar
+                name={fullname}
+                imageUrl={profilePic}
+                size="sm"
+                className="shadow-none ring-2 ring-card-border ring-offset-2 ring-offset-surface"
+              />
             </Link>
           ) : !isLoading ? (
             <>
@@ -115,7 +122,12 @@ export default function Navbar() {
                 onClick={() => setMobileMenuOpen(false)}
                 className="flex items-center justify-center gap-3 w-full py-2.5 text-text-main hover:bg-primary-light border border-card-border/40 rounded-xl transition-all duration-300"
               >
-                <UserAvatar name={fullname} size="sm" />
+                <UserAvatar
+                name={fullname}
+                imageUrl={profilePic}
+                size="sm"
+                className="shadow-none ring-2 ring-card-border ring-offset-2 ring-offset-surface"
+              />
                 <span className="font-bold">{fullname}</span>
               </Link>
             ) : !isLoading ? (

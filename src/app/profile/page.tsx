@@ -1,11 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import AppSidebar from "@/components/AppSidebar";
-import { getProfile } from "@/services/api/user";
 import { ApiError } from "@/services/api/types";
-import { useAuth } from "@/hooks/useAuth";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import ProfileHeader from "./components/ProfileHeader";
 import ProfileSummaryCard from "./components/ProfileSummaryCard";
 import PersonalInfoSection from "./components/PersonalInfoSection";
@@ -15,27 +13,18 @@ import FreezeAccountSection from "./components/FreezeAccountSection";
 
 export default function ProfilePage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { user: sessionUser } = useAuth();
-
   const {
-    data: profile,
+    profile,
+    user: sessionUser,
+    displayName,
     isLoading,
     isError,
     error,
     refetch,
     isFetching,
-  } = useQuery({
-    queryKey: ["user", "profile"],
-    queryFn: async () => {
-      const response = await getProfile();
-      if (!response.data) {
-        throw new Error("تعذر قراءة بيانات الحساب");
-      }
-      return response.data;
-    },
-  });
+  } = useUserProfile();
 
-  const fullname = profile?.fullname || sessionUser?.fullname || "";
+  const fullname = profile?.fullname || displayName || sessionUser?.fullname || "";
   const email = profile?.email || sessionUser?.email || "";
   const errorMessage =
     error instanceof ApiError
@@ -50,6 +39,7 @@ export default function ProfilePage() {
       <div className="absolute top-[40%] start-[-20%] w-[500px] h-[500px] -z-10 bg-purple/15 rounded-full blur-[100px] pointer-events-none select-none" />
 
       <AppSidebar
+        activeItem="profile"
         mobileOpen={sidebarOpen}
         onCloseMobile={() => setSidebarOpen(false)}
       />
@@ -76,7 +66,11 @@ export default function ProfilePage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)] gap-6 lg:gap-8 items-start">
-              <ProfileSummaryCard name={fullname} email={email} />
+              <ProfileSummaryCard
+                name={fullname}
+                email={email}
+                profilePic={profile?.profilePic}
+              />
 
               <div className="rounded-2xl border border-card-border bg-surface/90 backdrop-blur-sm shadow-sm p-5 sm:p-7 space-y-8">
                 <PersonalInfoSection fullname={fullname} email={email} />

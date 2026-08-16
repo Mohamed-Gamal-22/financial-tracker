@@ -49,21 +49,23 @@ export default function AccountSettingsSection() {
         {SETTINGS.map((item) => (
           <div
             key={item.id}
-            className="flex items-center gap-3 px-4 py-3.5"
+            className="flex items-center gap-3 px-4 py-3.5 opacity-70"
           >
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-surface text-primary border border-card-border/60">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-surface/80 text-text-muted border border-card-border/60">
               {item.icon}
             </span>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-text-main">{item.label}</p>
-              <p className="text-xs font-medium text-text-muted mt-0.5 truncate">{item.value}</p>
+              <p className="text-sm font-bold text-text-muted">{item.label}</p>
+              <p className="text-xs font-medium text-text-muted/80 mt-0.5 truncate">
+                {item.value}
+              </p>
             </div>
-            <button
-              type="button"
-              className="shrink-0 text-sm font-bold text-primary hover:text-primary-hover transition-colors cursor-pointer"
-            >
+            <span className="shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-card-border bg-surface/70 px-2.5 py-1 text-xs font-bold text-text-muted select-none">
               تغيير
-            </button>
+              <span className="rounded-md bg-primary/15 px-1.5 py-0.5 text-[10px] font-extrabold text-primary">
+                قريبًا
+              </span>
+            </span>
           </div>
         ))}
       </div>

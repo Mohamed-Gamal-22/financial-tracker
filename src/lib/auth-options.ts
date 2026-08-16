@@ -200,6 +200,17 @@ export const authOptions: NextAuthOptions = {
           getAccessTokenExpiresAt(token.accessToken) ?? undefined;
       }
 
+      if (trigger === "update" && session && typeof session === "object") {
+        const payload = session as {
+          forceTokenRotate?: boolean;
+          fullname?: unknown;
+        };
+        if (typeof payload.fullname === "string") {
+          const nextName = payload.fullname.trim();
+          if (nextName) token.fullname = nextName;
+        }
+      }
+
       const forceRotate =
         trigger === "update" &&
         Boolean(
