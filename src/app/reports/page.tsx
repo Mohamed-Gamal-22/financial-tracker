@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
@@ -88,6 +88,12 @@ export default function ReportsPage() {
 
   const mode = watch("mode");
 
+  useEffect(() => {
+    if (mode === "current") {
+      setAppliedParams({});
+    }
+  }, [mode]);
+
   const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
     queryKey: ["transaction-report", appliedParams],
     queryFn: async () => {
@@ -173,19 +179,29 @@ export default function ReportsPage() {
             </div>
 
             {mode === "day" && (
-              <div className="space-y-1.5 max-w-xs">
+              <div className="space-y-1.5">
                 <label className="text-xs font-bold text-text-main block">التاريخ</label>
-                <Controller
-                  name="date"
-                  control={control}
-                  render={({ field }) => (
-                    <DayPickerField
-                      value={field.value ?? ""}
-                      onChange={field.onChange}
-                      placeholder="اختر التاريخ"
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="w-full max-w-xs min-w-0">
+                    <Controller
+                      name="date"
+                      control={control}
+                      render={({ field }) => (
+                        <DayPickerField
+                          value={field.value ?? ""}
+                          onChange={field.onChange}
+                          placeholder="اختر التاريخ"
+                        />
+                      )}
                     />
-                  )}
-                />
+                  </div>
+                  <button
+                    type="submit"
+                    className="shrink-0 rounded-xl bg-primary hover:bg-primary-hover text-text-inverse text-sm font-bold px-5 py-2.5 shadow-lg shadow-primary/20 cursor-pointer"
+                  >
+                    عرض التقرير
+                  </button>
+                </div>
                 {errors.date && (
                   <p className="text-accent-danger text-xs font-medium">{errors.date.message}</p>
                 )}
@@ -193,33 +209,36 @@ export default function ReportsPage() {
             )}
 
             {mode === "month" && (
-              <div className="space-y-1.5 max-w-xs">
+              <div className="space-y-1.5">
                 <label className="text-xs font-bold text-text-main block">الشهر</label>
-                <Controller
-                  name="month"
-                  control={control}
-                  render={({ field }) => (
-                    <MonthPickerField
-                      value={field.value ?? ""}
-                      onChange={(value) =>
-                        field.onChange(yearMonthFromPeriod(value) || value)
-                      }
-                      placeholder="اختر الشهر"
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="w-full max-w-xs min-w-0">
+                    <Controller
+                      name="month"
+                      control={control}
+                      render={({ field }) => (
+                        <MonthPickerField
+                          value={field.value ?? ""}
+                          onChange={(value) =>
+                            field.onChange(yearMonthFromPeriod(value) || value)
+                          }
+                          placeholder="اختر الشهر"
+                        />
+                      )}
                     />
-                  )}
-                />
+                  </div>
+                  <button
+                    type="submit"
+                    className="shrink-0 rounded-xl bg-primary hover:bg-primary-hover text-text-inverse text-sm font-bold px-5 py-2.5 shadow-lg shadow-primary/20 cursor-pointer"
+                  >
+                    عرض التقرير
+                  </button>
+                </div>
                 {errors.month && (
                   <p className="text-accent-danger text-xs font-medium">{errors.month.message}</p>
                 )}
               </div>
             )}
-
-            <button
-              type="submit"
-              className="rounded-xl bg-primary hover:bg-primary-hover text-text-inverse text-sm font-bold px-5 py-2.5 shadow-lg shadow-primary/20 cursor-pointer"
-            >
-              عرض التقرير
-            </button>
           </form>
 
           {isLoading ? (
@@ -272,14 +291,14 @@ export default function ReportsPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                 <Section
-                  title={CATEGORY_TYPE_LABELS.expense}
-                  titleClass="text-accent-danger"
-                  rows={data.expense ?? []}
-                />
-                <Section
                   title={CATEGORY_TYPE_LABELS.income}
                   titleClass="text-accent-success"
                   rows={data.income ?? []}
+                />
+                <Section
+                  title={CATEGORY_TYPE_LABELS.expense}
+                  titleClass="text-accent-danger"
+                  rows={data.expense ?? []}
                 />
                 <Section
                   title={CATEGORY_TYPE_LABELS.savings}
