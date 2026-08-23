@@ -57,6 +57,14 @@ export function localizeNotificationText(raw: string): string {
     to: (match: RegExpMatchArray) => string;
   }> = [
     {
+      re: /spent\s+([\d,.]+)\s+(?:out\s+of|of)\s+([\d,.]+)/i,
+      to: (m) => `أنفقت ${m[1]} من ${m[2]}`,
+    },
+    {
+      re: /(?:monthly\s+)?expense\s+budget.*?(\d{1,3})\s*%/i,
+      to: (m) => `وصلتَ إلى ${m[1]}% من ميزانية المصروف الشهري`,
+    },
+    {
       re: /(?:warning|alert)[:\s-]+.*?(\d{1,3})\s*%.*?budget.*?(?:for|in|on)\s+(.+?)(?:[.!]|$)/i,
       to: (m) =>
         `تنبيه: وصلتَ إلى ${m[1]}% من ميزانية «${translateCategoryName(m[2])}»`,

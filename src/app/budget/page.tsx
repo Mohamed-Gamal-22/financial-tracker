@@ -3,60 +3,47 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import AppSidebar from "@/components/AppSidebar";
-import { getCategories } from "@/services/api/category";
-import { getBudgets, resolveBudgetCategory } from "@/services/api/budget";
+import { getMonthlyBudgetByMonth } from "@/services/api/monthlyBudget";
 import { getTransactionSummary } from "@/services/api/transaction";
 import { ApiError } from "@/services/api/types";
 import { currentYearMonth, formatMoney } from "@/lib/format";
 import BudgetHeader from "./components/BudgetHeader";
 import BudgetSetup from "./components/BudgetSetup";
-import BudgetProgress, {
-  type BudgetProgressRow,
-} from "./components/BudgetProgress";
+import BudgetProgress from "./components/BudgetProgress";
 import BudgetOverallSummary from "./components/BudgetOverallSummary";
+import BudgetHistoryList from "./components/BudgetHistoryList";
+
+function sumSection(
+  rows: Array<{ total?: number }> | undefined,
+): number {
+  if (!rows?.length) return 0;
+  return rows.reduce((acc, row) => acc + (Number(row.total) || 0), 0);
+}
 
 export default function BudgetPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [month, setMonth] = useState(currentYearMonth);
-  /** Fallback when GET /budget returns rows without a usable amount. */
-  const [amountOverrides, setAmountOverrides] = useState<
-    Record<string, Record<string, number>>
-  >({});
-
-  const monthOverrides = amountOverrides[month] ?? {};
 
   const {
-    data: categories = [],
-    isLoading: categoriesLoading,
-    isError: categoriesError,
-    error: categoriesErr,
-    refetch: refetchCategories,
-    isFetching: categoriesFetching,
+    data: budget,
+    isLoading: budgetLoading,
+    isError: budgetError,
+    error: budgetErr,
+    refetch: refetchBudget,
+    isFetching: budgetFetching,
   } = useQuery({
-    queryKey: ["categories"],
-    queryFn: async () => (await getCategories()).data ?? [],
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const expenseCategories = useMemo(
-    () =>
-      categories
-        .filter((category) => category.type === "expense")
-        .slice()
-        .sort((a, b) => a.name.localeCompare(b.name, "ar")),
-    [categories],
-  );
-
-  const {
-    data: budgets = [],
-    isLoading: budgetsLoading,
-    isError: budgetsError,
-    error: budgetsErr,
-    refetch: refetchBudgets,
-    isFetching: budgetsFetching,
-  } = useQuery({
-    queryKey: ["budgets", month],
-    queryFn: async () => (await getBudgets(month)).data ?? [],
+    queryKey: ["monthly-budget", month],
+    queryFn: async () => {
+      try {
+        const response = await getMonthlyBudgetByMonth(month);
+        return response.data ?? null;
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 404) {
+          return null;
+        }
+        throw error;
+      }
+    },
   });
 
   const {
@@ -71,89 +58,26 @@ export default function BudgetPage() {
     queryFn: async () => (await getTransactionSummary(month)).data,
   });
 
-  const spentByCategoryId = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const row of summary?.expense ?? []) {
-      const id = row.category?._id;
-      if (!id) continue;
-      map.set(id, Number(row.total) || 0);
-    }
-    return map;
-  }, [summary]);
-
-  const progressRows: BudgetProgressRow[] = useMemo(() => {
-    const byCategory = new Map<string, BudgetProgressRow>();
-
-    for (const budget of budgets) {
-      const category = resolveBudgetCategory(budget.category);
-      if (!category?._id) continue;
-      const override = monthOverrides[category._id];
-      const cap =
-        (typeof override === "number" && override > 0
-          ? override
-          : Number(budget.amount) || 0) || 0;
-      if (cap <= 0) continue;
-
-      const spent = spentByCategoryId.get(category._id) ?? 0;
-      byCategory.set(category._id, {
-        id: category._id,
-        name:
-          category.name !== "—"
-            ? category.name
-            : (expenseCategories.find((item) => item._id === category._id)
-                ?.name ?? "تصنيف"),
-        cap,
-        spent,
-      });
-    }
-
-    // Include overrides for categories the API still returns with amount 0.
-    for (const [categoryId, cap] of Object.entries(monthOverrides)) {
-      if (cap <= 0 || byCategory.has(categoryId)) continue;
-      const category = expenseCategories.find((item) => item._id === categoryId);
-      byCategory.set(categoryId, {
-        id: categoryId,
-        name: category?.name ?? "تصنيف",
-        cap,
-        spent: spentByCategoryId.get(categoryId) ?? 0,
-      });
-    }
-
-    return Array.from(byCategory.values()).sort((a, b) => {
-      const percentA = a.cap > 0 ? a.spent / a.cap : 0;
-      const percentB = b.cap > 0 ? b.spent / b.cap : 0;
-      return percentB - percentA;
-    });
-  }, [budgets, expenseCategories, monthOverrides, spentByCategoryId]);
-
-  const monthBudgetTotal = useMemo(
-    () => progressRows.reduce((acc, row) => acc + row.cap, 0),
-    [progressRows],
+  const totalIncome = useMemo(
+    () => sumSection(summary?.income),
+    [summary?.income],
   );
 
-  const monthSpentTotal = useMemo(
-    () => progressRows.reduce((acc, row) => acc + row.spent, 0),
-    [progressRows],
-  );
+  const actualExpenses = budget?.actualExpenses ?? sumSection(summary?.expense);
 
-  const isLoading = categoriesLoading || budgetsLoading || summaryLoading;
-  const isError = categoriesError || budgetsError || summaryError;
-  const isFetching =
-    categoriesFetching || budgetsFetching || summaryFetching;
+  const isLoading = budgetLoading || summaryLoading;
+  const isError = budgetError || summaryError;
+  const isFetching = budgetFetching || summaryFetching;
   const errorMessage =
-    categoriesErr instanceof ApiError
-      ? categoriesErr.message
-      : budgetsErr instanceof ApiError
-        ? budgetsErr.message
-        : summaryErr instanceof ApiError
-          ? summaryErr.message
-          : categoriesErr instanceof Error
-            ? categoriesErr.message
-            : budgetsErr instanceof Error
-              ? budgetsErr.message
-              : summaryErr instanceof Error
-                ? summaryErr.message
-                : "تعذر تحميل بيانات الميزانية";
+    budgetErr instanceof ApiError
+      ? budgetErr.message
+      : summaryErr instanceof ApiError
+        ? summaryErr.message
+        : budgetErr instanceof Error
+          ? budgetErr.message
+          : summaryErr instanceof Error
+            ? summaryErr.message
+            : "تعذر تحميل بيانات الميزانية";
 
   return (
     <div className="min-h-screen flex relative text-text-main overflow-x-hidden font-sans bg-gradient-to-br from-bg-start to-bg-end">
@@ -180,8 +104,7 @@ export default function BudgetPage() {
               <button
                 type="button"
                 onClick={() => {
-                  void refetchCategories();
-                  void refetchBudgets();
+                  void refetchBudget();
                   void refetchSummary();
                 }}
                 disabled={isFetching}
@@ -192,50 +115,45 @@ export default function BudgetPage() {
             </div>
           ) : (
             <>
-              {!isLoading && progressRows.length > 0 && (
+              {!isLoading && budget && budget.expenseAmount > 0 && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="rounded-2xl border border-card-border bg-surface shadow-sm p-5 text-start">
-                    <p className="text-xs font-bold text-text-muted">
-                      ميزانية هذا الشهر
-                    </p>
+                    <p className="text-xs font-bold text-text-muted">سقف المصروف</p>
                     <p className="mt-2 text-2xl font-extrabold text-primary tabular-nums tracking-tight">
-                      {formatMoney(monthBudgetTotal)}
+                      {formatMoney(budget.expenseAmount)}
                     </p>
                   </div>
                   <div className="rounded-2xl border border-card-border bg-surface shadow-sm p-5 text-start">
-                    <p className="text-xs font-bold text-text-muted">
-                      المصروف من الميزانية
-                    </p>
+                    <p className="text-xs font-bold text-text-muted">المصروف الفعلي</p>
                     <p className="mt-2 text-2xl font-extrabold text-text-main tabular-nums tracking-tight">
-                      {formatMoney(monthSpentTotal)}
+                      {formatMoney(actualExpenses)}
                     </p>
                   </div>
                 </div>
               )}
 
               <BudgetSetup
-                categories={expenseCategories}
-                budgets={budgets}
                 month={month}
+                budget={budget}
+                totalIncome={totalIncome}
                 isLoading={isLoading}
-                amountOverrides={monthOverrides}
-                onAmountSaved={(categoryId, amount) => {
-                  setAmountOverrides((prev) => ({
-                    ...prev,
-                    [month]: {
-                      ...(prev[month] ?? {}),
-                      [categoryId]: amount,
-                    },
-                  }));
-                }}
               />
 
-              <BudgetProgress rows={progressRows} isLoading={isLoading} />
+              <BudgetProgress
+                expenseCap={budget?.expenseAmount ?? 0}
+                actualExpenses={actualExpenses}
+                isLoading={isLoading}
+              />
 
               <BudgetOverallSummary
-                totalCap={monthBudgetTotal}
-                totalSpent={monthSpentTotal}
+                budget={budget}
+                totalIncome={totalIncome}
                 isLoading={isLoading}
+              />
+
+              <BudgetHistoryList
+                activeMonth={month}
+                onSelectMonth={setMonth}
               />
             </>
           )}

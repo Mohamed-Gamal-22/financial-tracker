@@ -95,6 +95,9 @@ function TransactionsPageContent() {
     setCategoryNameInput(next);
     setCategoryName(next);
     setPage(1);
+    if (searchParams.get("add") === "1") {
+      setCreateOpen(true);
+    }
   }, [searchParams]);
 
   useEffect(() => {

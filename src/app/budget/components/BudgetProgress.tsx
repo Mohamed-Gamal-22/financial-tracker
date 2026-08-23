@@ -2,15 +2,9 @@
 
 import { formatMoney } from "@/lib/format";
 
-export type BudgetProgressRow = {
-  id: string;
-  name: string;
-  cap: number;
-  spent: number;
-};
-
 type BudgetProgressProps = {
-  rows: BudgetProgressRow[];
+  expenseCap: number;
+  actualExpenses: number;
   isLoading?: boolean;
 };
 
@@ -39,7 +33,11 @@ function statusFor(percent: number) {
   };
 }
 
-export default function BudgetProgress({ rows, isLoading }: BudgetProgressProps) {
+export default function BudgetProgress({
+  expenseCap,
+  actualExpenses,
+  isLoading,
+}: BudgetProgressProps) {
   if (isLoading) {
     return (
       <section className="rounded-2xl border border-card-border bg-surface/90 p-8 text-center">
@@ -48,60 +46,58 @@ export default function BudgetProgress({ rows, isLoading }: BudgetProgressProps)
     );
   }
 
+  if (expenseCap <= 0) {
+    return (
+      <section className="rounded-2xl border border-dashed border-card-border bg-surface/60 p-8 text-center">
+        <p className="text-sm font-bold text-text-muted">
+          لا توجد ميزانية لهذا الشهر — يمكنك إضافة مصروفات بدون ميزانية (ضمن حدود الدخل)
+        </p>
+      </section>
+    );
+  }
+
+  const percent =
+    expenseCap > 0 ? Math.round((actualExpenses / expenseCap) * 100) : 0;
+  const barWidth = Math.min(percent, 100);
+  const status = statusFor(percent);
+
   return (
     <section className="rounded-2xl border border-card-border bg-surface shadow-sm p-5 sm:p-6 text-start space-y-5">
       <div>
-        <h2 className="text-base font-extrabold text-text-main">نسب استهلاك الميزانية</h2>
+        <h2 className="text-base font-extrabold text-text-main">
+          نسبة استهلاك ميزانية المصروف
+        </h2>
         <p className="mt-1 text-xs font-medium text-text-muted">
-          نسبة ما اتصرف من سقف كل تصنيف مصروف في الشهر المحدد
+          تنبيهات السيرفر تُرسل عند تجاوز 80% من سقف المصروف الشهري
         </p>
       </div>
 
-      {rows.length === 0 ? (
-        <p className="text-sm font-bold text-text-muted py-4 text-center">
-          احفظ ميزانية لتصنيف واحد على الأقل لعرض النسب هنا
-        </p>
-      ) : (
-        <div className="space-y-5">
-          {rows.map((row) => {
-            const percent =
-              row.cap > 0 ? Math.round((row.spent / row.cap) * 100) : 0;
-            const barWidth = Math.min(percent, 100);
-            const status = statusFor(percent);
-
-            return (
-              <div key={row.id} className="space-y-2">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-sm font-extrabold text-text-main truncate">
-                      {row.name}
-                    </p>
-                    <p className="mt-0.5 text-[11px] font-medium text-text-muted">
-                      {formatMoney(row.spent)} من {formatMoney(row.cap)}
-                    </p>
-                  </div>
-                  <div className="shrink-0 text-end space-y-1">
-                    <p className={`text-sm font-extrabold tabular-nums ${status.tone}`}>
-                      {percent}%
-                    </p>
-                    <span
-                      className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold ${status.badge}`}
-                    >
-                      {status.label}
-                    </span>
-                  </div>
-                </div>
-                <div className="h-2.5 rounded-full bg-primary-tint overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all ${status.bar}`}
-                    style={{ width: `${barWidth}%` }}
-                  />
-                </div>
-              </div>
-            );
-          })}
+      <div className="space-y-2">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-sm font-extrabold text-text-main">المصروف الشهري</p>
+            <p className="mt-0.5 text-[11px] font-medium text-text-muted">
+              {formatMoney(actualExpenses)} من {formatMoney(expenseCap)}
+            </p>
+          </div>
+          <div className="shrink-0 text-end space-y-1">
+            <p className={`text-sm font-extrabold tabular-nums ${status.tone}`}>
+              {percent}%
+            </p>
+            <span
+              className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold ${status.badge}`}
+            >
+              {status.label}
+            </span>
+          </div>
         </div>
-      )}
+        <div className="h-2.5 rounded-full bg-primary-tint overflow-hidden">
+          <div
+            className={`h-full rounded-full transition-all ${status.bar}`}
+            style={{ width: `${barWidth}%` }}
+          />
+        </div>
+      </div>
     </section>
   );
 }

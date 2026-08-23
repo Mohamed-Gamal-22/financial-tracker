@@ -31,8 +31,6 @@ export default withAuth(
           pathname.startsWith("/dashboard/") ||
           pathname === "/transactions" ||
           pathname.startsWith("/transactions/") ||
-          pathname === "/categories" ||
-          pathname.startsWith("/categories/") ||
           pathname === "/profile" ||
           pathname.startsWith("/profile/") ||
           pathname === "/reports" ||
@@ -57,7 +55,6 @@ export const config = {
     "/",
     "/dashboard/:path*",
     "/transactions/:path*",
-    "/categories/:path*",
     "/profile/:path*",
     "/reports/:path*",
     "/budget/:path*",

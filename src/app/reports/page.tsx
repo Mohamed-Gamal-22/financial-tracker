@@ -18,7 +18,7 @@ import {
   type ReportQueryFormValues,
   type SummaryCategoryRow,
 } from "@/schemas/transaction.schema";
-import { formatMoney } from "@/lib/format";
+import { formatMoney, resolveCategory } from "@/lib/format";
 
 function Section({
   title,
@@ -36,14 +36,18 @@ function Section({
         <p className="text-sm font-medium text-text-muted">لا توجد بيانات</p>
       ) : (
         <ul className="space-y-3">
-          {rows.map((row) => (
+          {rows.map((row, index) => {
+            const category = resolveCategory(row.category);
+            const key = `${category?._id ?? category?.name ?? "row"}-${index}`;
+
+            return (
             <li
-              key={row.category?._id ?? row.category?.name}
+              key={key}
               className="flex items-center justify-between gap-3"
             >
               <div className="min-w-0">
                 <p className="text-sm font-bold text-text-main truncate">
-                  {row.category?.name ?? "—"}
+                  {category?.name ?? "—"}
                 </p>
                 <p className="text-xs font-medium text-text-muted mt-0.5">
                   {row.count} معاملة
@@ -53,7 +57,8 @@ function Section({
                 {formatMoney(row.total)}
               </p>
             </li>
-          ))}
+            );
+          })}
         </ul>
       )}
     </section>

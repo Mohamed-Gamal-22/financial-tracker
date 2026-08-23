@@ -1,10 +1,15 @@
+import { isAuthFailureError } from "@/services/auth/auth-failure";
 import { REFRESH_TOKEN_ERROR } from "@/services/auth/refresh-constants";
 import { clearLegacyAuthStorage } from "@/services/auth/session-utils";
-import { shouldRotateAccessToken } from "@/services/auth/token-expiry";
+import {
+  isAccessTokenExpired,
+  resolveAccessTokenExpiresAt,
+  shouldRotateAccessToken,
+} from "@/services/auth/token-expiry";
 import { forceSessionTokenRotate } from "@/services/auth/force-session-rotate";
 import { getSession, signOut } from "next-auth/react";
 import { apiRequest, cloneFormData, type ApiRequestOptions } from "./client";
-import { ApiError, type ApiResponse } from "./types";
+import type { ApiResponse } from "./types";
 
 /** Deduplicate concurrent rotate/refresh calls from parallel API requests. */
 let refreshInFlight: Promise<string | null> | null = null;
@@ -25,6 +30,21 @@ async function getAccessTokenFromSession() {
   return session?.accessToken ?? null;
 }
 
+function tokenNeedsRotation(session: {
+  accessToken?: string;
+  accessTokenExpires?: number;
+}) {
+  const expiresAt = resolveAccessTokenExpiresAt(
+    session.accessToken,
+    session.accessTokenExpires,
+  );
+
+  return (
+    shouldRotateAccessToken(expiresAt) ||
+    isAccessTokenExpired(session.accessToken, expiresAt)
+  );
+}
+
 /**
  * Ensure we have a usable access token.
  * Proactively rotates via NextAuth jwt callback when ≤ 5 minutes remain.
@@ -40,10 +60,7 @@ async function ensureAccessToken(options?: {
       return null;
     }
 
-    if (
-      session?.accessToken &&
-      !shouldRotateAccessToken(session.accessTokenExpires)
-    ) {
+    if (session?.accessToken && !tokenNeedsRotation(session)) {
       return session.accessToken;
     }
   }
@@ -71,7 +88,7 @@ async function ensureAccessToken(options?: {
 /**
  * Client-side authenticated request with token interceptors:
  * - Proactive rotate when access token is within 5 minutes of expiry
- * - On 401: force rotate once, then retry the original request
+ * - On auth failure (401/403 or "jwt expired"): force rotate once, then retry
  */
 export async function authedApiRequest<T>(
   path: string,
@@ -95,10 +112,7 @@ export async function authedApiRequest<T>(
       accessToken,
     });
   } catch (error) {
-    const isUnauthorized =
-      error instanceof ApiError && error.status === 401;
-
-    if (!isUnauthorized) {
+    if (!isAuthFailureError(error)) {
       throw error;
     }
 

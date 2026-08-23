@@ -11,7 +11,6 @@ import UserAvatar from "@/components/UserAvatar";
 export type SidebarItemId =
   | "home"
   | "transactions"
-  | "categories"
   | "reports"
   | "budget"
   | "alerts"
@@ -21,6 +20,8 @@ type AppSidebarProps = {
   activeItem?: SidebarItemId;
   mobileOpen?: boolean;
   onCloseMobile?: () => void;
+  highlightItem?: SidebarItemId;
+  onHighlightClick?: () => void;
 };
 
 const NAV_ITEMS: {
@@ -46,20 +47,6 @@ const NAV_ITEMS: {
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
         <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-      </svg>
-    ),
-  },
-  {
-    id: "categories",
-    label: "التصنيفات",
-    href: "/categories",
-    icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 2l4-4 4 4-4 4-4-4z"
-        />
       </svg>
     ),
   },
@@ -95,10 +82,22 @@ const NAV_ITEMS: {
   },
 ];
 
+const COMING_SOON_ANALYSIS_ICON = (
+  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+    />
+  </svg>
+);
+
 export default function AppSidebar({
   activeItem,
   mobileOpen = false,
   onCloseMobile,
+  highlightItem,
+  onHighlightClick,
 }: AppSidebarProps) {
   const { logout } = useAuth();
   const { displayName, profilePic } = useUserProfile();
@@ -129,7 +128,8 @@ export default function AppSidebar({
 
       <aside
         className={[
-          "fixed inset-y-0 start-0 z-50 flex w-[280px] flex-col border-e border-card-border bg-surface/95 backdrop-blur-xl shadow-xl transition-transform duration-300 lg:static lg:z-auto lg:translate-x-0 lg:shadow-none",
+          "fixed inset-y-0 start-0 flex w-[280px] flex-col border-e border-card-border bg-surface/95 backdrop-blur-xl shadow-xl transition-transform duration-300 lg:static lg:translate-x-0 lg:shadow-none",
+          highlightItem ? "z-[110] lg:relative lg:z-[110]" : "z-50 lg:z-auto",
           mobileOpen ? "translate-x-0" : "translate-x-full lg:translate-x-0",
         ].join(" ")}
       >
@@ -143,25 +143,31 @@ export default function AppSidebar({
           </Link>
         </div>
 
-        <nav className="px-4 pb-3 space-y-1 overflow-y-auto">
+        <nav className="shrink-0 px-4 pb-3 space-y-1">
           {NAV_ITEMS.map((item) => {
             const active = activeItem === item.id;
             const isAlerts = item.id === "alerts";
+            const highlighted = highlightItem === item.id;
             return (
               <Link
                 key={item.id}
                 href={item.href}
-                onClick={onCloseMobile}
+                onClick={() => {
+                  if (highlighted) onHighlightClick?.();
+                  onCloseMobile?.();
+                }}
                 aria-label={
                   isAlerts && unreadCount > 0
                     ? `التنبيهات، ${unreadCount} غير مقروءة`
                     : undefined
                 }
                 className={[
-                  "flex items-center gap-3 rounded-xl border border-card-border px-3.5 py-2.5 text-sm font-bold transition-colors",
-                  active
-                    ? "bg-primary-tint text-primary border-primary/30"
-                    : "text-text-main/80 hover:bg-primary-tint/50 hover:text-primary",
+                  "flex items-center gap-3 rounded-xl border px-3.5 py-2.5 text-sm font-bold transition-colors",
+                  highlighted
+                    ? "border-sky bg-sky/15 text-primary ring-2 ring-sky shadow-lg shadow-sky/25"
+                    : active
+                      ? "border-primary/30 bg-primary-tint text-primary"
+                      : "border-card-border text-text-main/80 hover:bg-primary-tint/50 hover:text-primary",
                 ].join(" ")}
               >
                 <span
@@ -177,11 +183,30 @@ export default function AppSidebar({
               </Link>
             );
           })}
+
+          <div
+            aria-disabled="true"
+            aria-label="اسأل خبراءنا لتحليل معاملاتك وتقديم حلول، قريبًا"
+            title="قريبًا"
+            className="flex items-start gap-3 rounded-xl border border-dashed border-sky/55 bg-gradient-to-l from-sky/15 via-primary-tint/80 to-primary/10 px-3.5 py-2.5 text-sm font-bold cursor-not-allowed select-none"
+          >
+            <span className="relative mt-0.5 inline-flex shrink-0 rounded-lg bg-sky/20 p-1 text-sky">
+              {COMING_SOON_ANALYSIS_ICON}
+            </span>
+            <span className="flex min-w-0 flex-1 flex-col gap-1.5 text-start leading-snug">
+              <span className="text-primary break-words">
+                اسأل خبراءنا لتحليل معاملاتك وتقديم حلول
+              </span>
+              <span className="w-fit rounded-md bg-sky px-2 py-0.5 text-[10px] font-extrabold tracking-wide text-text-inverse">
+                قريبًا
+              </span>
+            </span>
+          </div>
         </nav>
 
-        <div className="mx-4 border-t border-card-border" />
+        <div className="mx-4 shrink-0 border-t border-card-border" />
 
-        <div className="px-4 pt-3 pb-5 space-y-1">
+        <div className="shrink-0 px-4 pt-3 pb-5 space-y-1">
           <Link
             href="/profile"
             onClick={onCloseMobile}

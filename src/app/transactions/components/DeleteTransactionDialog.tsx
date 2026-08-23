@@ -55,6 +55,7 @@ export default function DeleteTransactionDialog({
       void queryClient.invalidateQueries({ queryKey: ["transaction-summary"] });
       void queryClient.invalidateQueries({ queryKey: ["transaction-report"] });
       void queryClient.invalidateQueries({ queryKey: ["recent-transactions"] });
+      void queryClient.invalidateQueries({ queryKey: ["monthly-budget"] });
       void queryClient.invalidateQueries({ queryKey: ["notifications"] });
       setPending(false);
       onDeleted?.();

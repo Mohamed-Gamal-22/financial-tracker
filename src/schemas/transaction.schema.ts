@@ -1,13 +1,7 @@
 import { z } from "zod";
 import { categoryTypeSchema } from "@/schemas/category.schema";
 
-const objectIdSchema = z
-  .string()
-  .trim()
-  .min(1, { message: "اختر تصنيفًا" })
-  .regex(/^[a-fA-F0-9]{24}$/, { message: "معرّف التصنيف غير صالح" });
-
-/** POST /transaction */
+/** POST /transaction — category is income | expense | savings */
 export const createTransactionSchema = z.object({
   title: z
     .string()
@@ -18,7 +12,7 @@ export const createTransactionSchema = z.object({
     .number({ message: "المبلغ مطلوب" })
     .finite({ message: "المبلغ غير صالح" })
     .gt(0, { message: "المبلغ يجب أن يكون أكبر من صفر" }),
-  category: objectIdSchema,
+  category: categoryTypeSchema,
   date: z
     .string()
     .trim()
@@ -30,6 +24,27 @@ export const createTransactionSchema = z.object({
 
 export type CreateTransactionInput = z.infer<typeof createTransactionSchema>;
 export type CreateTransactionFormValues = z.input<typeof createTransactionSchema>;
+
+/** UI form — user picks income/expense/savings; sent as category on submit */
+export const createTransactionUiSchema = createTransactionSchema
+  .omit({ category: true })
+  .extend({
+    categoryType: z
+      .string()
+      .refine(
+        (value): value is z.infer<typeof categoryTypeSchema> =>
+          categoryTypeSchema.safeParse(value).success,
+        { message: "اختر تصنيف المعاملة" },
+      ),
+  });
+
+export type CreateTransactionUiInput = z.infer<typeof createTransactionUiSchema>;
+export type CreateTransactionUiFormValues = z.input<typeof createTransactionUiSchema>;
+
+/** PATCH /transaction/:id — all fields optional */
+export const updateTransactionSchema = createTransactionSchema.partial();
+export type UpdateTransactionInput = z.infer<typeof updateTransactionSchema>;
+export type UpdateTransactionFormValues = z.input<typeof updateTransactionSchema>;
 
 export const reportTypeSchema = z.enum(["day", "month"]);
 
@@ -90,7 +105,7 @@ export type TransactionListData = {
 };
 
 export type SummaryCategoryRow = {
-  category: { _id: string; name: string };
+  category: string | TransactionCategoryRef;
   count: number;
   total: number;
 };

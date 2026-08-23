@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useId } from "react";
+import { useEffect, useId, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getTransaction } from "@/services/api/transaction";
 import { ApiError } from "@/services/api/types";
 import { CATEGORY_TYPE_LABELS } from "@/schemas/category.schema";
+import EditTransactionModal from "./EditTransactionModal";
 import {
   amountToneClass,
   formatDateAr,
@@ -17,14 +18,17 @@ type TransactionDetailModalProps = {
   open: boolean;
   transactionId: string | null;
   onClose: () => void;
+  onUpdated?: () => void;
 };
 
 export default function TransactionDetailModal({
   open,
   transactionId,
   onClose,
+  onUpdated,
 }: TransactionDetailModalProps) {
   const titleId = useId();
+  const [editOpen, setEditOpen] = useState(false);
 
   const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
     queryKey: ["transaction", transactionId],
@@ -128,7 +132,7 @@ export default function TransactionDetailModal({
           </dl>
         ) : null}
 
-        <div className="mt-6 flex justify-end">
+        <div className="mt-6 flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
           <button
             type="button"
             onClick={onClose}
@@ -136,8 +140,27 @@ export default function TransactionDetailModal({
           >
             إغلاق
           </button>
+          {data && (
+            <button
+              type="button"
+              onClick={() => setEditOpen(true)}
+              className="rounded-xl bg-primary hover:bg-primary-hover text-text-inverse px-5 py-2.5 text-sm font-bold transition-colors cursor-pointer"
+            >
+              تعديل
+            </button>
+          )}
         </div>
       </div>
+
+      <EditTransactionModal
+        open={editOpen}
+        transactionId={transactionId}
+        onClose={() => setEditOpen(false)}
+        onUpdated={() => {
+          onUpdated?.();
+          void refetch();
+        }}
+      />
     </div>
   );
 }

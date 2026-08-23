@@ -202,7 +202,7 @@ export default function LoginForm() {
       </button>
       </form>
 
-      <AuthDividerWithGoogle mode="login" callbackUrl={callbackUrl} />
+      <AuthDividerWithGoogle mode="continue" callbackUrl={callbackUrl} />
     </div>
   );
 }

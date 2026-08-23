@@ -8,6 +8,7 @@ import type {
   TransactionListData,
   TransactionReportData,
   TransactionSummaryData,
+  UpdateTransactionInput,
 } from "@/schemas/transaction.schema";
 
 function toQuery(params: Record<string, string | number | undefined>) {
@@ -229,6 +230,20 @@ export function createTransaction(body: CreateTransactionInput) {
 
   return authedApiRequest<Transaction>(withLangQuery("/transaction"), {
     method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+/** PATCH /transaction/:id?lang=ar */
+export function updateTransaction(id: string, body: UpdateTransactionInput) {
+  const payload: Record<string, string | number> = {};
+  if (body.title !== undefined) payload.title = body.title;
+  if (body.amount !== undefined) payload.amount = body.amount;
+  if (body.category !== undefined) payload.category = body.category;
+  if (body.date !== undefined && body.date !== "") payload.date = body.date;
+
+  return authedApiRequest<Transaction>(withLangQuery(`/transaction/${id}`), {
+    method: "PATCH",
     body: JSON.stringify(payload),
   });
 }

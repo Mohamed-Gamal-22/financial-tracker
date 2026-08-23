@@ -7,14 +7,15 @@ import type {
   ResetPasswordInput,
   SignupInput,
 } from "@/schemas/auth.schema";
-import { apiRequest } from "./client";
+import { apiRequest, withLangQuery } from "./client";
 import type { AuthTokens } from "@/services/auth/parse-login";
 
-/** POST /auth/signup */
+/** POST /auth/signup?lang=ar — normal clients must not send `role`. */
 export function signup(body: SignupInput) {
-  return apiRequest("/auth/signup", {
+  const { role: _role, ...payload } = body;
+  return apiRequest(withLangQuery("/auth/signup"), {
     method: "POST",
-    body: JSON.stringify(body),
+    body: JSON.stringify(payload),
   });
 }
 
@@ -31,58 +32,55 @@ export type LoginResponseData = AuthTokens & {
   };
 };
 
-/** POST /auth/login */
+/** POST /auth/login?lang=ar */
 export function login(body: LoginInput) {
-  return apiRequest<LoginResponseData>("/auth/login", {
+  return apiRequest<LoginResponseData>(withLangQuery("/auth/login"), {
     method: "POST",
     body: JSON.stringify(body),
   });
 }
 
-/** PATCH /auth/confirm-email */
+/** PATCH /auth/confirm-email?lang=ar */
 export function confirmEmail(body: ConfirmEmailInput) {
-  return apiRequest("/auth/confirm-email", {
+  return apiRequest(withLangQuery("/auth/confirm-email"), {
     method: "PATCH",
     body: JSON.stringify(body),
   });
 }
 
-/** PATCH /auth/resend-otp */
+/** PATCH /auth/resend-otp?lang=ar */
 export function resendOtp(body: ResendOtpInput) {
-  return apiRequest("/auth/resend-otp", {
+  return apiRequest(withLangQuery("/auth/resend-otp"), {
     method: "PATCH",
     body: JSON.stringify(body),
   });
 }
 
-/** POST /auth/forgot-password-otp */
+/** POST /auth/forgot-password-otp?lang=ar */
 export function forgotPassword(body: ForgotPasswordInput) {
-  return apiRequest("/auth/forgot-password-otp", {
+  return apiRequest(withLangQuery("/auth/forgot-password-otp"), {
     method: "POST",
     body: JSON.stringify(body),
   });
 }
 
-/** PATCH /auth/reset-password */
+/** PATCH /auth/reset-password?lang=ar */
 export function resetPassword(body: ResetPasswordInput) {
-  return apiRequest("/auth/reset-password", {
+  return apiRequest(withLangQuery("/auth/reset-password"), {
     method: "PATCH",
     body: JSON.stringify(body),
   });
 }
 
-/** POST /auth/gmail — Continue with Google (sign up or login) */
+/** POST /auth/gmail?lang=ar — Continue with Google (sign up or login) */
 export function continueWithGoogle(body: GoogleIdTokenInput) {
-  return apiRequest<LoginResponseData>("/auth/gmail", {
+  return apiRequest<LoginResponseData>(withLangQuery("/auth/gmail"), {
     method: "POST",
     body: JSON.stringify(body),
   });
 }
 
-/** POST /auth/login/gmail — Login with Gmail (existing Google account only) */
+/** @deprecated Use continueWithGoogle — master doc uses /auth/gmail only */
 export function loginWithGmail(body: GoogleIdTokenInput) {
-  return apiRequest<LoginResponseData>("/auth/login/gmail", {
-    method: "POST",
-    body: JSON.stringify(body),
-  });
+  return continueWithGoogle(body);
 }

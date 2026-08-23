@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { getTransactionSummary } from "@/services/api/transaction";
-import { currentYearMonth, formatMoney, sumTotals } from "@/lib/format";
+import { currentYearMonth, formatMoney, resolveCategory, sumTotals } from "@/lib/format";
 
 const COLORS = ["bg-primary", "bg-accent-success", "bg-sky", "bg-purple", "bg-orange-400"];
 
@@ -25,8 +25,10 @@ export default function ExpenseCategories({ month }: { month: string }) {
   const legend = rows.slice(0, 5).map((row, index) => {
     const percent =
       expenseTotal > 0 ? Math.round((row.total / expenseTotal) * 100) : 0;
+    const category = resolveCategory(row.category);
     return {
-      label: row.category?.name ?? "—",
+      key: `${category?._id ?? category?.name ?? "row"}-${index}`,
+      label: category?.name ?? "—",
       percent: `${percent}%`,
       value: row.total,
       color: COLORS[index % COLORS.length],
@@ -53,7 +55,7 @@ export default function ExpenseCategories({ month }: { month: string }) {
           </p>
           <ul className="space-y-3">
             {legend.map((item) => (
-              <li key={item.label} className="flex items-center gap-3">
+              <li key={item.key} className="flex items-center gap-3">
                 <span className={`size-3 rounded-full shrink-0 ${item.color}`} />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2">

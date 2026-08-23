@@ -49,7 +49,7 @@ export default function NotificationsPage() {
                   التنبيهات
                 </h1>
                 <p className="mt-1 text-sm font-medium text-text-muted">
-                  إشعارات تجاوز ميزانية التصنيفات (من السيرفر عند تعدّي 80%)
+                  إشعارات تجاوز 80% من ميزانية المصروف الشهري (من السيرفر)
                 </p>
               </div>
             </div>

@@ -59,7 +59,7 @@ export default function NotificationDetailModal({
         : "تعذر تحميل تفاصيل الإشعار";
 
   return createPortal(
-    <div className="fixed inset-0 z-110 grid place-items-center p-4">
+    <div className="fixed inset-0 z-110 flex items-center justify-center p-4">
       <button
         type="button"
         aria-label="إغلاق"
@@ -71,7 +71,7 @@ export default function NotificationDetailModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative z-10 w-full max-w-md rounded-2xl border border-card-border bg-surface shadow-2xl p-6 text-start"
+        className="relative z-10 w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-2xl border border-card-border bg-surface shadow-2xl p-6 text-start"
       >
         <h2 id={titleId} className="text-xl font-extrabold text-text-main tracking-tight">
           تفاصيل الإشعار

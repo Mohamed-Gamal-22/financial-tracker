@@ -1,11 +1,30 @@
-import type { CategoryType } from "@/schemas/category.schema";
+import {
+  CATEGORY_TYPE_LABELS,
+  type CategoryType,
+} from "@/schemas/category.schema";
 import type { Transaction, TransactionCategoryRef } from "@/schemas/transaction.schema";
+
+function parseCategoryTypeString(value: string): CategoryType | undefined {
+  const normalized = value.trim().toLowerCase();
+  if (normalized === "income" || normalized === "expense" || normalized === "savings") {
+    return normalized;
+  }
+  return undefined;
+}
 
 export function resolveCategory(
   category: Transaction["category"],
 ): TransactionCategoryRef | null {
   if (!category) return null;
   if (typeof category === "string") {
+    const type = parseCategoryTypeString(category);
+    if (type) {
+      return {
+        _id: category,
+        name: CATEGORY_TYPE_LABELS[type],
+        type,
+      };
+    }
     return { _id: category, name: "—" };
   }
   return category;
@@ -14,8 +33,16 @@ export function resolveCategory(
 export function categoryTypeOf(
   category: Transaction["category"],
 ): CategoryType | undefined {
+  if (typeof category === "string") {
+    const asType = parseCategoryTypeString(category);
+    if (asType) return asType;
+  }
   const resolved = resolveCategory(category);
-  return resolved?.type;
+  if (resolved?.type) return resolved.type;
+  if (resolved?.typeLabel) {
+    return parseCategoryTypeString(resolved.typeLabel);
+  }
+  return undefined;
 }
 
 /** Format amount with EGP; sign from category type when available. */

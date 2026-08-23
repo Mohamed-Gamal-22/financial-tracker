@@ -35,7 +35,7 @@ export default function BudgetHeader({
             الميزانية
           </h1>
           <p className="mt-1 text-sm font-medium text-text-muted">
-            حدد سقفًا لكل تصنيف مصروف، ثم تابع نسبة الاستهلاك تحت
+            حدّد سقف مصروفات الشهر وتابع الاستهلاك والادخار
           </p>
         </div>
       </div>

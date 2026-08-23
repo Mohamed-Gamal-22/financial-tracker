@@ -3,11 +3,9 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import {
   continueWithGoogle,
   login,
-  loginWithGmail,
 } from "@/services/api/auth";
 import { ApiError } from "@/services/api/types";
 import {
-  googleAuthModeSchema,
   googleIdTokenSchema,
   loginSchema,
 } from "@/schemas/auth.schema";
@@ -105,22 +103,15 @@ export const authOptions: NextAuthOptions = {
         const tokenParsed = googleIdTokenSchema.safeParse({
           idToken: credentials?.idToken,
         });
-        const modeParsed = googleAuthModeSchema.safeParse(
-          credentials?.mode || "continue",
-        );
 
-        if (!tokenParsed.success || !modeParsed.success) {
+        if (!tokenParsed.success) {
           throw new Error("بيانات Google غير صالحة");
         }
 
         const { idToken } = tokenParsed.data;
-        const mode = modeParsed.data;
 
         try {
-          const response =
-            mode === "login"
-              ? await loginWithGmail({ idToken })
-              : await continueWithGoogle({ idToken });
+          const response = await continueWithGoogle({ idToken });
 
           const fallbackEmail = emailFromGoogleIdToken(idToken);
           const fallbackName = nameFromGoogleIdToken(idToken);
@@ -200,6 +191,12 @@ export const authOptions: NextAuthOptions = {
           getAccessTokenExpiresAt(token.accessToken) ?? undefined;
       }
 
+      const expiresAt =
+        token.accessTokenExpires ??
+        (token.accessToken
+          ? getAccessTokenExpiresAt(token.accessToken) ?? undefined
+          : undefined);
+
       if (trigger === "update" && session && typeof session === "object") {
         const payload = session as {
           forceTokenRotate?: boolean;
@@ -220,7 +217,7 @@ export const authOptions: NextAuthOptions = {
             (session as { forceTokenRotate?: boolean }).forceTokenRotate,
         );
 
-      if (forceRotate || shouldRotateAccessToken(token.accessTokenExpires)) {
+      if (forceRotate || shouldRotateAccessToken(expiresAt)) {
         return refreshAccessToken(token);
       }
 

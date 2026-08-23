@@ -30,7 +30,6 @@ type DashboardTopBarProps = {
 const PAGE_SHORTCUTS = [
   { label: "الرئيسية", href: "/dashboard", keywords: ["رئيسية", "لوحة", "home", "dashboard"] },
   { label: "المعاملات", href: "/transactions", keywords: ["معاملات", "مصروفات", "transactions"] },
-  { label: "التصنيفات", href: "/categories", keywords: ["تصنيفات", "فئات", "categories"] },
   { label: "التقارير", href: "/reports", keywords: ["تقارير", "reports"] },
   { label: "الميزانية", href: "/budget", keywords: ["ميزانية", "budget"] },
   { label: "التنبيهات", href: "/notifications", keywords: ["تنبيهات", "إشعارات", "notifications"] },
@@ -238,7 +237,7 @@ export default function DashboardTopBar({ onOpenSidebar }: DashboardTopBarProps)
                         {matchedCategories.map((category) => (
                           <li key={category._id}>
                             <Link
-                              href={`/transactions?q=${encodeURIComponent(category.name)}`}
+                              href={`/transactions?categoryName=${encodeURIComponent(category.name)}`}
                               role="option"
                               onClick={() => {
                                 setOpen(false);

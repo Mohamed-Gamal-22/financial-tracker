@@ -1,7 +1,10 @@
 "use client";
 
 import { REFRESH_TOKEN_ERROR } from "@/services/auth/refresh-constants";
-import { msUntilRotateWindow } from "@/services/auth/token-expiry";
+import {
+  msUntilRotateWindow,
+  resolveAccessTokenExpiresAt,
+} from "@/services/auth/token-expiry";
 import { clearLegacyAuthStorage } from "@/services/auth/session-utils";
 import { signOut, useSession } from "next-auth/react";
 import { useEffect, useRef } from "react";
@@ -27,7 +30,12 @@ export default function TokenRefreshWatcher() {
       timerRef.current = null;
     }
 
-    if (status !== "authenticated" || !session?.accessTokenExpires) {
+    const expiresAt = resolveAccessTokenExpiresAt(
+      session?.accessToken,
+      session?.accessTokenExpires,
+    );
+
+    if (status !== "authenticated" || expiresAt == null) {
       return;
     }
 
@@ -35,7 +43,7 @@ export default function TokenRefreshWatcher() {
       return;
     }
 
-    const delay = msUntilRotateWindow(session.accessTokenExpires);
+    const delay = msUntilRotateWindow(expiresAt);
     if (delay == null) return;
 
     timerRef.current = setTimeout(() => {
@@ -49,6 +57,7 @@ export default function TokenRefreshWatcher() {
       }
     };
   }, [
+    session?.accessToken,
     session?.accessTokenExpires,
     session?.error,
     status,

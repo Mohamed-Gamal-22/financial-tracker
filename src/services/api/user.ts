@@ -133,9 +133,11 @@ export function normalizeUserProfile(data: unknown): UserProfile | null {
   };
 }
 
-/** GET /user */
+/** GET /user?lang=ar */
 export async function getProfile(): Promise<ApiResponse<UserProfile>> {
-  const response = await authedApiRequest<unknown>("/user", { method: "GET" });
+  const response = await authedApiRequest<unknown>(withLangQuery("/user"), {
+    method: "GET",
+  });
   const profile =
     normalizeUserProfile(response.data) ??
     // Some backends put user fields on the envelope root (no `data` wrapper).
@@ -147,17 +149,17 @@ export async function getProfile(): Promise<ApiResponse<UserProfile>> {
   };
 }
 
-/** POST /user/logout — `one` = this device, `all` = every device */
+/** POST /user/logout?lang=ar — `one` = this device, `all` = every device */
 export function logoutUser(flag: LogoutFlag = "one") {
-  return authedApiRequest("/user/logout", {
+  return authedApiRequest(withLangQuery("/user/logout"), {
     method: "POST",
     body: JSON.stringify({ flag }),
   });
 }
 
-/** DELETE /user/freeze — soft-delete account */
+/** DELETE /user/freeze?lang=ar — soft-delete account */
 export function freezeAccount() {
-  return authedApiRequest("/user/freeze", { method: "DELETE" });
+  return authedApiRequest(withLangQuery("/user/freeze"), { method: "DELETE" });
 }
 
 /**
