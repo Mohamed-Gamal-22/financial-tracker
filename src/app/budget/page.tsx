@@ -8,6 +8,7 @@ import { getTransactionSummary } from "@/services/api/transaction";
 import { ApiError } from "@/services/api/types";
 import { currentYearMonth, formatMoney } from "@/lib/format";
 import BudgetHeader from "./components/BudgetHeader";
+import BudgetOptionalNotice from "./components/BudgetOptionalNotice";
 import BudgetSetup from "./components/BudgetSetup";
 import BudgetProgress from "./components/BudgetProgress";
 import BudgetOverallSummary from "./components/BudgetOverallSummary";
@@ -100,6 +101,8 @@ export default function BudgetPage() {
             month={month}
             onMonthChange={setMonth}
           />
+
+          <BudgetOptionalNotice />
 
           {isError ? (
             <div className="rounded-2xl border border-accent-danger/25 bg-accent-danger/5 p-8 text-center space-y-4">

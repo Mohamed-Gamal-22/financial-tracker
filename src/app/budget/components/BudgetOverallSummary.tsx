@@ -59,11 +59,16 @@ export default function BudgetOverallSummary({
 
   if (!budget) {
     return (
-      <section className="rounded-2xl border border-dashed border-card-border bg-surface/60 p-6 text-center">
-        <p className="text-sm font-bold text-text-muted">
+      <section className="rounded-2xl border border-dashed border-card-border bg-surface/60 p-6 text-start space-y-2">
+        <p className="text-sm font-extrabold text-text-main">
           {totalIncome > 0
-            ? "لم تُحدّد ميزانية بعد — يمكنك إضافة مصروفات ضمن حدود الدخل"
+            ? "لم تُحدّد ميزانية بعد — وده اختياري"
             : "ابدأ بتسجيل دخل الشهر"}
+        </p>
+        <p className="text-xs font-medium text-text-muted leading-relaxed">
+          {totalIncome > 0
+            ? "المعاملات شغّالة من غير ميزانية طالما المصروفات + الادخار ضمن إجمالي الدخل. حدّد ميزانية لو حابب تتابع السقف والادخار وتراجع الأشهر السابقة."
+            : "بعد تسجيل دخل تقدر تضيف مصروفات وادخار، والميزانية تبقى اختيارية عشان التتبع لاحقًا."}
         </p>
       </section>
     );

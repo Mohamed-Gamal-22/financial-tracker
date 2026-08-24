@@ -48,9 +48,13 @@ export default function BudgetProgress({
 
   if (expenseCap <= 0) {
     return (
-      <section className="rounded-2xl border border-dashed border-card-border bg-surface/60 p-8 text-center">
-        <p className="text-sm font-bold text-text-muted">
-          لا توجد ميزانية لهذا الشهر — يمكنك إضافة مصروفات بدون ميزانية (ضمن حدود الدخل)
+      <section className="rounded-2xl border border-dashed border-card-border bg-surface/60 p-6 sm:p-8 text-start space-y-2">
+        <p className="text-sm font-extrabold text-text-main">
+          لا توجد ميزانية لهذا الشهر — وده اختياري
+        </p>
+        <p className="text-xs font-medium text-text-muted leading-relaxed">
+          تقدر تكمل تسجيل مصروفات وادخار بشرط إن المصروفات + الادخار مايتعدّوش إجمالي الدخل.
+          لما تحدد ميزانية هتقدر تتابع نسبة الاستهلاك من السقف وتراجعها لاحقًا في سجل الميزانيات.
         </p>
       </section>
     );
