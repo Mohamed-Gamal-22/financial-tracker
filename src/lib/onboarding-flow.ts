@@ -5,22 +5,28 @@ function storageKey(userKey?: string | null) {
 }
 
 /**
- * Shown on each browser session after login.
- * Later this can switch to a first-of-month gate without changing callers.
+ * True when the user already dismissed onboarding for this calendar month (YYYY-MM).
  */
-export function isOnboardingFlowDismissed(userKey?: string | null): boolean {
-  if (typeof window === "undefined") return true;
+export function isOnboardingFlowDismissed(
+  userKey?: string | null,
+  month?: string | null,
+): boolean {
+  if (typeof window === "undefined" || !month) return true;
   try {
-    return window.sessionStorage.getItem(storageKey(userKey)) === "dismissed";
+    return window.localStorage.getItem(storageKey(userKey)) === month;
   } catch {
     return false;
   }
 }
 
-export function markOnboardingFlowDismissed(userKey?: string | null) {
-  if (typeof window === "undefined") return;
+/** Remember dismissal for the given calendar month (YYYY-MM). */
+export function markOnboardingFlowDismissed(
+  userKey?: string | null,
+  month?: string | null,
+) {
+  if (typeof window === "undefined" || !month) return;
   try {
-    window.sessionStorage.setItem(storageKey(userKey), "dismissed");
+    window.localStorage.setItem(storageKey(userKey), month);
   } catch {
     // ignore quota / private mode
   }

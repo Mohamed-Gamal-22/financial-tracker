@@ -10,7 +10,6 @@ import {
   amountToneClass,
   formatDateAr,
   formatMoney,
-  resolveCategory,
   categoryTypeOf,
 } from "@/lib/format";
 
@@ -57,11 +56,8 @@ export default function TransactionDetailModal({
 
   if (!open || !transactionId) return null;
 
-  const category = data ? resolveCategory(data.category) : null;
   const type = data ? categoryTypeOf(data.category) : undefined;
-  const typeLabel =
-    category?.typeLabel ||
-    (type ? CATEGORY_TYPE_LABELS[type] : undefined);
+  const typeLabel = type ? CATEGORY_TYPE_LABELS[type] : undefined;
 
   const errorMessage =
     error instanceof ApiError
@@ -114,10 +110,6 @@ export default function TransactionDetailModal({
               <dd className={`font-extrabold text-end ${amountToneClass(type)}`}>
                 {formatMoney(data.amount, { type, withSign: true })}
               </dd>
-            </div>
-            <div className="flex justify-between gap-4">
-              <dt className="font-bold text-text-muted">التصنيف</dt>
-              <dd className="font-bold text-text-main text-end">{category?.name ?? "—"}</dd>
             </div>
             {typeLabel && (
               <div className="flex justify-between gap-4">

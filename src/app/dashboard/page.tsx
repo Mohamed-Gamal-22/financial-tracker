@@ -34,14 +34,15 @@ export default function DashboardPage() {
   const [incomeOpen, setIncomeOpen] = useState(false);
 
   useEffect(() => {
-    if (!isOnboardingFlowDismissed(userKey)) {
+    const calendarMonth = currentYearMonth();
+    if (!isOnboardingFlowDismissed(userKey, calendarMonth)) {
       setFlowOpen(true);
       setFlowStep(1);
     }
   }, [userKey]);
 
   const dismissFlow = useCallback(() => {
-    markOnboardingFlowDismissed(userKey);
+    markOnboardingFlowDismissed(userKey, currentYearMonth());
     setFlowOpen(false);
     setIncomeOpen(false);
     setSidebarOpen(false);
