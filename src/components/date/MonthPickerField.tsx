@@ -86,9 +86,13 @@ export default function MonthPickerField({
     };
     document.addEventListener("mousedown", onPointerDown);
     document.addEventListener("keydown", onKeyDown);
+    const isNarrow = window.matchMedia("(max-width: 639px)").matches;
+    const previousOverflow = document.body.style.overflow;
+    if (isNarrow) document.body.style.overflow = "hidden";
     return () => {
       document.removeEventListener("mousedown", onPointerDown);
       document.removeEventListener("keydown", onKeyDown);
+      if (isNarrow) document.body.style.overflow = previousOverflow;
     };
   }, [open]);
 
@@ -198,12 +202,35 @@ export default function MonthPickerField({
       </button>
 
       {open && (
-        <div
-          id={panelId}
-          role="dialog"
-          aria-label={monthOnly ? "اختيار الشهر" : "اختيار الشهر أو اليوم"}
-          className="absolute z-50 mt-2 end-0 min-w-[17rem] rounded-2xl border border-card-border bg-surface shadow-xl p-3"
-        >
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 sm:static sm:inset-auto sm:z-50 sm:block sm:p-0">
+          <button
+            type="button"
+            aria-label="إغلاق"
+            className="absolute inset-0 bg-text-main/40 backdrop-blur-[2px] cursor-pointer sm:hidden"
+            onClick={() => setOpen(false)}
+          />
+          <div
+            id={panelId}
+            role="dialog"
+            aria-label={monthOnly ? "اختيار الشهر" : "اختيار الشهر أو اليوم"}
+            className="relative z-10 w-full max-w-[17rem] rounded-2xl border border-card-border bg-surface shadow-xl p-3 sm:absolute sm:end-0 sm:mt-2 sm:w-auto sm:min-w-[17rem] sm:max-w-none"
+          >
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <p className="text-xs font-extrabold text-text-muted">
+                {monthOnly ? "اختيار الشهر" : "اختيار التاريخ"}
+              </p>
+              <button
+                type="button"
+                aria-label="إغلاق"
+                onClick={() => setOpen(false)}
+                className="flex size-8 shrink-0 items-center justify-center rounded-xl border border-card-border bg-surface text-text-muted hover:bg-primary-tint/50 hover:text-text-main transition-colors cursor-pointer"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2" aria-hidden>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
           {!monthOnly && (
             <div className="mb-3 grid grid-cols-2 gap-1 rounded-xl bg-primary-tint/50 p-1">
               {(
@@ -326,6 +353,7 @@ export default function MonthPickerField({
           >
             الشهر الحالي
           </button>
+          </div>
         </div>
       )}
     </div>

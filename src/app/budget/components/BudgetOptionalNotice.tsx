@@ -26,7 +26,7 @@ export default function BudgetOptionalNotice() {
               اختياري
             </span>
             <h2 className="text-base sm:text-lg font-extrabold text-text-main">
-              الميزانية مش إجبارية
+              الميزانية مش إجبارية — لكنها مهمة جدًا للتقارير المستقبلية
             </h2>
           </div>
 
@@ -39,8 +39,8 @@ export default function BudgetOptionalNotice() {
           </p>
 
           <p className="text-xs sm:text-sm font-medium text-text-muted leading-relaxed">
-            والأفضل تحدد ميزانية عشان تتابع سقف المصروف والادخار التلقائي، وتراجع الأشهر
-            السابقة بسهولة لو حابب تشوف تاريخك المالي.
+            ومع كده، تحديد ميزانية مهم جدًا للتقارير المستقبلية: بيثبّت سقف المصروف وهدف
+            الادخار، ويخلّيك تراجع الأشهر السابقة في سجل الميزانيات وتقارن أداءك المالي بسهولة.
           </p>
         </div>
       </div>
