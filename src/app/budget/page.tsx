@@ -183,6 +183,8 @@ export default function BudgetPage() {
               <BudgetProgress
                 expenseCap={budget?.expenseAmount ?? 0}
                 actualExpenses={actualExpenses}
+                savingsCap={budget?.savingsAmount ?? 0}
+                actualSavings={budget?.actualSavings ?? 0}
                 isLoading={isLoading}
               />
 
