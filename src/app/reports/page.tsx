@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
@@ -11,54 +11,71 @@ import { yearMonthFromPeriod } from "@/lib/date-value";
 import { useAlert } from "@/app/(auth)/alerts";
 import { getTransactionReport } from "@/services/api/transaction";
 import { ApiError } from "@/services/api/types";
-import { CATEGORY_TYPE_LABELS } from "@/schemas/category.schema";
+import { CATEGORY_TYPE_LABELS, type CategoryType } from "@/schemas/category.schema";
 import {
   reportQuerySchema,
   type ReportParams,
   type ReportQueryFormValues,
-  type SummaryCategoryRow,
+  type Transaction,
 } from "@/schemas/transaction.schema";
-import { formatMoney, resolveCategory } from "@/lib/format";
+import {
+  amountToneClass,
+  formatDateAr,
+  formatMoney,
+} from "@/lib/format";
+import {
+  fetchReportTransactions,
+  groupTransactionsByType,
+} from "@/lib/report-transactions";
 
-function Section({
-  title,
+function transactionCountLabel(count: number) {
+  if (count === 1) return "معاملة واحدة";
+  if (count === 2) return "معاملتان";
+  return `${count} معاملات`;
+}
+
+function ReportTypeSection({
+  label,
   titleClass,
-  rows,
+  type,
+  items,
+  isLoading,
 }: {
-  title: string;
+  label: string;
   titleClass: string;
-  rows: SummaryCategoryRow[];
+  type: CategoryType;
+  items: Transaction[];
+  isLoading?: boolean;
 }) {
   return (
     <section className="rounded-2xl border border-card-border bg-surface shadow-sm p-5 text-start">
-      <h3 className={`text-base font-extrabold mb-4 ${titleClass}`}>{title}</h3>
-      {rows.length === 0 ? (
-        <p className="text-sm font-medium text-text-muted">لا توجد بيانات</p>
+      <h3 className={`text-base font-extrabold mb-4 ${titleClass}`}>
+        {label} — {isLoading ? "..." : transactionCountLabel(items.length)}
+      </h3>
+      {isLoading ? (
+        <p className="text-sm font-medium text-text-muted">جاري تحميل المعاملات...</p>
+      ) : items.length === 0 ? (
+        <p className="text-sm font-medium text-text-muted">لا توجد معاملات</p>
       ) : (
         <ul className="space-y-3">
-          {rows.map((row, index) => {
-            const category = resolveCategory(row.category);
-            const key = `${category?._id ?? category?.name ?? "row"}-${index}`;
-
-            return (
+          {items.map((tx) => (
             <li
-              key={key}
-              className="flex items-center justify-between gap-3"
+              key={tx._id}
+              className="flex items-start justify-between gap-3 border-b border-card-border/60 pb-3 last:border-0 last:pb-0"
             >
               <div className="min-w-0">
-                <p className="text-sm font-bold text-text-main truncate">
-                  {category?.name ?? "—"}
-                </p>
+                <p className="text-sm font-bold text-text-main truncate">{tx.title}</p>
                 <p className="text-xs font-medium text-text-muted mt-0.5">
-                  {row.count} معاملة
+                  {formatDateAr(tx.date)}
                 </p>
               </div>
-              <p className="text-sm font-extrabold text-text-main shrink-0">
-                {formatMoney(row.total)}
+              <p
+                className={`text-sm font-extrabold shrink-0 ${amountToneClass(type)}`}
+              >
+                {formatMoney(tx.amount, { type, withSign: true })}
               </p>
             </li>
-            );
-          })}
+          ))}
         </ul>
       )}
     </section>
@@ -107,6 +124,20 @@ export default function ReportsPage() {
     },
   });
 
+  const {
+    data: reportTransactions,
+    isLoading: transactionsLoading,
+  } = useQuery({
+    queryKey: ["report-transactions", appliedParams],
+    queryFn: () => fetchReportTransactions(appliedParams),
+    enabled: Boolean(data),
+  });
+
+  const grouped = useMemo(
+    () => groupTransactionsByType(reportTransactions ?? []),
+    [reportTransactions],
+  );
+
   const errorMessage =
     error instanceof ApiError
       ? error.message
@@ -143,7 +174,7 @@ export default function ReportsPage() {
                 التقارير
               </h1>
               <p className="mt-1 text-sm font-medium text-text-muted">
-                تقرير مالي مجمّع حسب التصنيف مع الإجماليات
+                إجماليات مالية مع تفاصيل المعاملات لكل نوع
               </p>
             </div>
           </div>
@@ -295,20 +326,26 @@ export default function ReportsPage() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                <Section
-                  title={CATEGORY_TYPE_LABELS.income}
+                <ReportTypeSection
+                  label={CATEGORY_TYPE_LABELS.income}
                   titleClass="text-accent-success"
-                  rows={data.income ?? []}
+                  type="income"
+                  items={grouped.income}
+                  isLoading={transactionsLoading}
                 />
-                <Section
-                  title={CATEGORY_TYPE_LABELS.expense}
+                <ReportTypeSection
+                  label={CATEGORY_TYPE_LABELS.expense}
                   titleClass="text-accent-danger"
-                  rows={data.expense ?? []}
+                  type="expense"
+                  items={grouped.expense}
+                  isLoading={transactionsLoading}
                 />
-                <Section
-                  title={CATEGORY_TYPE_LABELS.savings}
+                <ReportTypeSection
+                  label={CATEGORY_TYPE_LABELS.savings}
                   titleClass="text-sky"
-                  rows={data.savings ?? []}
+                  type="savings"
+                  items={grouped.savings}
+                  isLoading={transactionsLoading}
                 />
               </div>
             </div>

@@ -65,6 +65,9 @@ export default function BudgetPage() {
 
   const actualExpenses = budget?.actualExpenses ?? sumSection(summary?.expense);
 
+  const autoSavings = budget?.savingsAmount ?? 0;
+  const showExpenseCards = Boolean(budget && budget.expenseAmount > 0);
+
   const isLoading = budgetLoading || summaryLoading;
   const isError = budgetError || summaryError;
   const isFetching = budgetFetching || summaryFetching;
@@ -115,20 +118,55 @@ export default function BudgetPage() {
             </div>
           ) : (
             <>
-              {!isLoading && budget && budget.expenseAmount > 0 && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="rounded-2xl border border-card-border bg-surface shadow-sm p-5 text-start">
-                    <p className="text-xs font-bold text-text-muted">سقف المصروف</p>
-                    <p className="mt-2 text-2xl font-extrabold text-primary tabular-nums tracking-tight">
-                      {formatMoney(budget.expenseAmount)}
+              {!isLoading && (
+                <div
+                  className={[
+                    "grid gap-4",
+                    showExpenseCards
+                      ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
+                      : "grid-cols-1 sm:grid-cols-2",
+                  ].join(" ")}
+                >
+                  <div className="rounded-2xl border border-accent-success/25 bg-accent-success/5 shadow-sm p-5 text-start">
+                    <p className="text-xs font-bold text-text-muted">إجمالي الدخل</p>
+                    <p className="mt-2 text-2xl sm:text-3xl font-extrabold text-accent-success tabular-nums tracking-tight">
+                      {formatMoney(totalIncome)}
+                    </p>
+                    <p className="mt-1.5 text-[11px] font-medium text-text-muted">
+                      {totalIncome > 0
+                        ? "مجموع معاملات الدخل المسجّلة لهذا الشهر"
+                        : "سجّل دخل الشهر أولًا قبل إنشاء الميزانية"}
                     </p>
                   </div>
-                  <div className="rounded-2xl border border-card-border bg-surface shadow-sm p-5 text-start">
-                    <p className="text-xs font-bold text-text-muted">المصروف الفعلي</p>
-                    <p className="mt-2 text-2xl font-extrabold text-text-main tabular-nums tracking-tight">
-                      {formatMoney(actualExpenses)}
+                  {showExpenseCards && (
+                    <div className="rounded-2xl border border-card-border bg-surface shadow-sm p-5 text-start">
+                      <p className="text-xs font-bold text-text-muted">سقف المصروف</p>
+                      <p className="mt-2 text-2xl font-extrabold text-primary tabular-nums tracking-tight">
+                        {formatMoney(budget!.expenseAmount)}
+                      </p>
+                    </div>
+                  )}
+                  <div className="rounded-2xl border border-sky/25 bg-sky/5 shadow-sm p-5 text-start">
+                    <p className="text-xs font-bold text-text-muted">الادخار التلقائي</p>
+                    <p className="mt-2 text-2xl sm:text-3xl font-extrabold text-sky tabular-nums tracking-tight">
+                      {formatMoney(autoSavings)}
+                    </p>
+                    <p className="mt-1.5 text-[11px] font-medium text-text-muted">
+                      {showExpenseCards
+                        ? "الدخل − سقف المصروف — يُحسب تلقائيًا من الميزانية"
+                        : totalIncome > 0
+                          ? "حدّد سقف المصروف لحساب الادخار التلقائي"
+                          : "يُحسب بعد تسجيل الدخل وتحديد الميزانية"}
                     </p>
                   </div>
+                  {showExpenseCards && (
+                    <div className="rounded-2xl border border-card-border bg-surface shadow-sm p-5 text-start">
+                      <p className="text-xs font-bold text-text-muted">المصروف الفعلي</p>
+                      <p className="mt-2 text-2xl font-extrabold text-text-main tabular-nums tracking-tight">
+                        {formatMoney(actualExpenses)}
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
 

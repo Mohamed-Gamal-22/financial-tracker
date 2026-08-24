@@ -11,6 +11,93 @@ type BudgetHistoryListProps = {
   onSelectMonth?: (month: string) => void;
 };
 
+/** Derived: الدخل = سقف المصروف + إجمالي الادخار (نفس منطق الميزانية). */
+function budgetTotalIncome(budget: MonthlyBudget): number {
+  return budget.expenseAmount + budget.savingsAmount;
+}
+
+const TOTAL_FIELD_LABELS: Record<string, string> = {
+  expenseAmount: "سقف المصروف",
+  actualExpenses: "المصروف الفعلي",
+  remainingExpenseBudget: "المتبقي للمصروف",
+  savingsAmount: "إجمالي الادخار",
+  actualSavings: "الادخار الفعلي",
+  remainingSavings: "المتبقي للادخار",
+  totalIncome: "إجمالي الدخل",
+  income: "إجمالي الدخل",
+};
+
+/** Monetary fields only — excludes `budgets` / `count` (record counts, not money). */
+const MONETARY_TOTAL_KEYS = [
+  "expenseAmount",
+  "savingsAmount",
+  "actualExpenses",
+  "remainingExpenseBudget",
+  "actualSavings",
+  "remainingSavings",
+] as const;
+
+type MonetaryTotalKey = (typeof MONETARY_TOTAL_KEYS)[number];
+
+function sumBudgetsAcrossMonths(budgets: MonthlyBudget[]) {
+  const sums: Record<MonetaryTotalKey, number> = {
+    expenseAmount: 0,
+    savingsAmount: 0,
+    actualExpenses: 0,
+    remainingExpenseBudget: 0,
+    actualSavings: 0,
+    remainingSavings: 0,
+  };
+
+  let totalIncome = 0;
+
+  for (const budget of budgets) {
+    totalIncome += budgetTotalIncome(budget);
+    for (const key of MONETARY_TOTAL_KEYS) {
+      sums[key] += budget[key];
+    }
+  }
+
+  const entries: { key: string; label: string; value: number }[] = [
+    {
+      key: "totalIncome",
+      label: TOTAL_FIELD_LABELS.totalIncome,
+      value: totalIncome,
+    },
+  ];
+
+  for (const key of MONETARY_TOTAL_KEYS) {
+    entries.push({
+      key,
+      label: TOTAL_FIELD_LABELS[key],
+      value: sums[key],
+    });
+  }
+
+  return entries;
+}
+
+const TABLE_COLUMNS = [
+  { key: "month", label: "الشهر", tone: "text-text-main" },
+  { key: "totalIncome", label: "إجمالي الدخل", tone: "text-accent-success" },
+  { key: "expenseAmount", label: "سقف المصروف", tone: "text-primary" },
+  { key: "savingsAmount", label: "إجمالي الادخار", tone: "text-sky" },
+  { key: "actualExpenses", label: "المصروف الفعلي", tone: "text-text-main" },
+  {
+    key: "remainingExpenseBudget",
+    label: "المتبقي للمصروف",
+    tone: "text-text-main",
+  },
+  { key: "actualSavings", label: "الادخار الفعلي", tone: "text-sky" },
+  { key: "remainingSavings", label: "المتبقي للادخار", tone: "text-sky" },
+] as const;
+
+function formatCellValue(budget: MonthlyBudget, key: (typeof TABLE_COLUMNS)[number]["key"]) {
+  if (key === "month") return budget.month;
+  if (key === "totalIncome") return formatMoney(budgetTotalIncome(budget));
+  return formatMoney(budget[key]);
+}
+
 function BudgetRow({
   budget,
   active,
@@ -29,27 +116,18 @@ function BudgetRow({
       ].join(" ")}
       onClick={onSelect ? () => onSelect(budget.month) : undefined}
     >
-      <td className="px-3 py-3 font-bold text-text-main whitespace-nowrap">
-        {budget.month}
-      </td>
-      <td className="px-3 py-3 tabular-nums text-text-main">
-        {formatMoney(budget.expenseAmount)}
-      </td>
-      <td className="px-3 py-3 tabular-nums text-text-main">
-        {formatMoney(budget.actualExpenses)}
-      </td>
-      <td className="px-3 py-3 tabular-nums text-text-main">
-        {formatMoney(budget.remainingExpenseBudget)}
-      </td>
-      <td className="px-3 py-3 tabular-nums text-sky">
-        {formatMoney(budget.savingsAmount)}
-      </td>
-      <td className="px-3 py-3 tabular-nums text-sky">
-        {formatMoney(budget.actualSavings)}
-      </td>
-      <td className="px-3 py-3 tabular-nums text-sky">
-        {formatMoney(budget.remainingSavings)}
-      </td>
+      {TABLE_COLUMNS.map((column) => (
+        <td
+          key={column.key}
+          className={[
+            "px-3 py-3 tabular-nums whitespace-nowrap",
+            column.key === "month" ? "font-bold" : "",
+            column.tone,
+          ].join(" ")}
+        >
+          {formatCellValue(budget, column.key)}
+        </td>
+      ))}
     </tr>
   );
 }
@@ -111,42 +189,45 @@ export default function BudgetHistoryList({
     );
   }
 
+  const budgetCount = Number(total?.budgets) || budgets.length;
+  const totalEntries = sumBudgetsAcrossMonths(budgets);
+
   return (
     <section className="rounded-2xl border border-card-border bg-surface shadow-sm p-5 sm:p-6 text-start space-y-4">
       <div>
         <h2 className="text-base font-extrabold text-text-main">سجل الميزانيات</h2>
         <p className="mt-1 text-xs font-medium text-text-muted">
-          كل الشهور مرتبة من الأحدث للأقدم
+          {budgetCount > 0
+            ? `${budgetCount.toLocaleString("ar-EG")} ${budgetCount === 1 ? "ميزانية" : "ميزانيات"} — مرتبة من الأحدث للأقدم`
+            : "كل الشهور مرتبة من الأحدث للأقدم"}
         </p>
       </div>
 
-      {total && Object.keys(total).length > 0 && (
-        <div className="rounded-xl border border-card-border/80 bg-surface/80 px-4 py-3">
-          <p className="text-[11px] font-bold text-text-muted mb-2">إجماليات</p>
-          <dl className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm">
-            {Object.entries(total).map(([key, value]) => (
-              <div key={key}>
-                <dt className="text-[11px] font-medium text-text-muted">{key}</dt>
-                <dd className="font-extrabold tabular-nums text-text-main">
-                  {formatMoney(Number(value) || 0)}
-                </dd>
-              </div>
-            ))}
-          </dl>
-        </div>
-      )}
+      <div className="rounded-xl border border-card-border/80 bg-surface/80 px-4 py-3">
+        <p className="text-[11px] font-bold text-text-muted mb-2">
+          إجماليات كل الشهور
+        </p>
+        <dl className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
+          {totalEntries.map(({ key, label, value }) => (
+            <div key={key}>
+              <dt className="text-[11px] font-medium text-text-muted">{label}</dt>
+              <dd className="font-extrabold tabular-nums text-text-main">
+                {formatMoney(value)}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </div>
 
       <div className="overflow-x-auto -mx-1 px-1">
-        <table className="w-full min-w-[640px] text-sm">
+        <table className="w-full min-w-[880px] text-sm">
           <thead>
             <tr className="text-[11px] font-bold text-text-muted">
-              <th className="px-3 py-2 text-start">الشهر</th>
-              <th className="px-3 py-2 text-start">سقف المصروف</th>
-              <th className="px-3 py-2 text-start">مصروف فعلي</th>
-              <th className="px-3 py-2 text-start">متبقي مصروف</th>
-              <th className="px-3 py-2 text-start">ادخار مخطط</th>
-              <th className="px-3 py-2 text-start">ادخار فعلي</th>
-              <th className="px-3 py-2 text-start">متبقي ادخار</th>
+              {TABLE_COLUMNS.map((column) => (
+                <th key={column.key} className="px-3 py-2 text-start whitespace-nowrap">
+                  {column.label}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>

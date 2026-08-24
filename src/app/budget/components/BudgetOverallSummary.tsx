@@ -9,6 +9,41 @@ type BudgetOverallSummaryProps = {
   isLoading?: boolean;
 };
 
+type SummaryItem = {
+  label: string;
+  value: number;
+  tone: string;
+};
+
+function SummaryRow({
+  items,
+  columns = 3,
+}: {
+  items: SummaryItem[];
+  columns?: 1 | 3;
+}) {
+  return (
+    <dl
+      className={[
+        "grid gap-3",
+        columns === 1 ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-3",
+      ].join(" ")}
+    >
+      {items.map((row) => (
+        <div
+          key={row.label}
+          className="rounded-xl border border-card-border/80 bg-surface/80 px-4 py-3"
+        >
+          <dt className="text-[11px] font-bold text-text-muted">{row.label}</dt>
+          <dd className={`mt-1 text-lg font-extrabold tabular-nums ${row.tone}`}>
+            {formatMoney(row.value)}
+          </dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
 export default function BudgetOverallSummary({
   budget,
   totalIncome,
@@ -34,8 +69,11 @@ export default function BudgetOverallSummary({
     );
   }
 
-  const rows = [
+  const incomeRow: SummaryItem[] = [
     { label: "إجمالي الدخل", value: totalIncome, tone: "text-accent-success" },
+  ];
+
+  const expenseRows: SummaryItem[] = [
     {
       label: "سقف المصروف",
       value: budget.expenseAmount,
@@ -51,8 +89,11 @@ export default function BudgetOverallSummary({
       value: budget.remainingExpenseBudget,
       tone: "text-text-main",
     },
+  ];
+
+  const savingsRows: SummaryItem[] = [
     {
-      label: "الادخار المخطط",
+      label: "إجمالي الادخار",
       value: budget.savingsAmount,
       tone: "text-sky",
     },
@@ -71,19 +112,11 @@ export default function BudgetOverallSummary({
   return (
     <section className="rounded-2xl border border-card-border bg-surface shadow-sm p-5 sm:p-6 text-start">
       <h2 className="text-base font-extrabold text-text-main mb-4">ملخص الشهر</h2>
-      <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {rows.map((row) => (
-          <div
-            key={row.label}
-            className="rounded-xl border border-card-border/80 bg-surface/80 px-4 py-3"
-          >
-            <dt className="text-[11px] font-bold text-text-muted">{row.label}</dt>
-            <dd className={`mt-1 text-lg font-extrabold tabular-nums ${row.tone}`}>
-              {formatMoney(row.value)}
-            </dd>
-          </div>
-        ))}
-      </dl>
+      <div className="space-y-4">
+        <SummaryRow items={incomeRow} columns={1} />
+        <SummaryRow items={expenseRows} columns={3} />
+        <SummaryRow items={savingsRows} columns={3} />
+      </div>
     </section>
   );
 }

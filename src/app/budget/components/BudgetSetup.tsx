@@ -159,6 +159,15 @@ export default function BudgetSetup({
         </div>
       )}
 
+      {totalIncome > 0 && (
+        <div className="rounded-xl border border-accent-success/25 bg-accent-success/5 px-4 py-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <p className="text-sm font-bold text-text-main">إجمالي دخل الشهر</p>
+          <p className="text-xl sm:text-2xl font-extrabold text-accent-success tabular-nums">
+            {formatMoney(totalIncome)}
+          </p>
+        </div>
+      )}
+
       {totalIncome <= 0 && canEdit && (
         <div className="rounded-xl border border-sky/30 bg-sky/10 px-4 py-3">
           <p className="text-sm font-bold text-sky">
@@ -252,11 +261,6 @@ export default function BudgetSetup({
             )}
           </div>
         </div>
-        {totalIncome > 0 && (
-          <p className="text-[11px] font-medium text-text-muted">
-            إجمالي الدخل هذا الشهر: {formatMoney(totalIncome)}
-          </p>
-        )}
       </div>
     </section>
   );

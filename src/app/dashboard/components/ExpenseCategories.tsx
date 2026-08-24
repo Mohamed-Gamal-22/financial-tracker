@@ -1,10 +1,12 @@
 "use client";
 
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getTransactionSummary } from "@/services/api/transaction";
-import { currentYearMonth, formatMoney, resolveCategory, sumTotals } from "@/lib/format";
+import { fetchMonthExpenses } from "@/lib/report-transactions";
+import { currentYearMonth, formatDateAr, formatMoney } from "@/lib/format";
 
 const COLORS = ["bg-primary", "bg-accent-success", "bg-sky", "bg-purple", "bg-orange-400"];
+const TOP_COUNT = 5;
 
 function emptyExpensesMessage(month: string) {
   if (month === currentYearMonth()) {
@@ -14,36 +16,45 @@ function emptyExpensesMessage(month: string) {
 }
 
 export default function ExpenseCategories({ month }: { month: string }) {
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ["transaction-summary", month],
-    queryFn: async () => (await getTransactionSummary(month)).data,
+  const { data: expenses = [], isLoading, isError } = useQuery({
+    queryKey: ["dashboard-expenses", month],
+    queryFn: () => fetchMonthExpenses(month),
   });
 
-  const rows = data?.expense ?? [];
-  const expenseTotal = sumTotals(rows);
-
-  const legend = rows.slice(0, 5).map((row, index) => {
-    const percent =
-      expenseTotal > 0 ? Math.round((row.total / expenseTotal) * 100) : 0;
-    const category = resolveCategory(row.category);
+  const { expenseTotal, topExpenses } = useMemo(() => {
+    const total = expenses.reduce(
+      (acc, tx) => acc + (Number(tx.amount) || 0),
+      0,
+    );
+    const sorted = [...expenses].sort(
+      (a, b) => (Number(b.amount) || 0) - (Number(a.amount) || 0),
+    );
     return {
-      key: `${category?._id ?? category?.name ?? "row"}-${index}`,
-      label: category?.name ?? "—",
-      percent: `${percent}%`,
-      value: row.total,
-      color: COLORS[index % COLORS.length],
+      expenseTotal: total,
+      topExpenses: sorted.slice(0, TOP_COUNT).map((tx, index) => {
+        const amount = Number(tx.amount) || 0;
+        const percent = total > 0 ? Math.round((amount / total) * 100) : 0;
+        return {
+          key: tx._id,
+          title: tx.title,
+          date: tx.date,
+          amount,
+          percent: `${percent}%`,
+          color: COLORS[index % COLORS.length],
+        };
+      }),
     };
-  });
+  }, [expenses]);
 
   return (
     <section className="rounded-2xl border border-card-border bg-surface shadow-sm p-5 sm:p-6 text-start h-full">
-      <h2 className="text-base font-extrabold text-text-main mb-5">تصنيف المصاريف</h2>
+      <h2 className="text-base font-extrabold text-text-main mb-5">أكبر المصروفات</h2>
 
       {isLoading ? (
         <p className="text-sm font-bold text-text-muted">جاري التحميل...</p>
       ) : isError ? (
-        <p className="text-sm font-bold text-accent-danger">تعذر تحميل الملخص</p>
-      ) : legend.length === 0 ? (
+        <p className="text-sm font-bold text-accent-danger">تعذر تحميل المصروفات</p>
+      ) : topExpenses.length === 0 ? (
         <p className="text-sm font-bold text-text-muted">{emptyExpensesMessage(month)}</p>
       ) : (
         <div className="flex flex-col gap-4">
@@ -54,12 +65,12 @@ export default function ExpenseCategories({ month }: { month: string }) {
             </span>
           </p>
           <ul className="space-y-3">
-            {legend.map((item) => (
+            {topExpenses.map((item) => (
               <li key={item.key} className="flex items-center gap-3">
                 <span className={`size-3 rounded-full shrink-0 ${item.color}`} />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-bold text-text-main truncate">{item.label}</p>
+                    <p className="text-sm font-bold text-text-main truncate">{item.title}</p>
                     <p className="text-xs font-bold text-text-muted shrink-0">{item.percent}</p>
                   </div>
                   <div className="mt-1.5 h-2 rounded-full bg-primary-tint/60 overflow-hidden">
@@ -68,9 +79,12 @@ export default function ExpenseCategories({ month }: { month: string }) {
                       style={{ width: item.percent }}
                     />
                   </div>
-                  <p className="mt-1 text-xs font-medium text-text-muted">
-                    {formatMoney(item.value)}
-                  </p>
+                  <div className="mt-1 flex items-center justify-between gap-2 text-xs font-medium text-text-muted">
+                    <span>{formatDateAr(item.date)}</span>
+                    <span className="font-extrabold text-accent-danger shrink-0">
+                      {formatMoney(item.amount)}
+                    </span>
+                  </div>
                 </div>
               </li>
             ))}

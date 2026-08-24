@@ -196,7 +196,7 @@ export default function DashboardTopBar({ onOpenSidebar }: DashboardTopBarProps)
                           return (
                             <li key={tx._id}>
                               <Link
-                                href={`/transactions?q=${encodeURIComponent(category?.name || tx.title)}`}
+                                href={`/transactions?q=${encodeURIComponent(tx.title)}`}
                                 role="option"
                                 onClick={() => {
                                   setOpen(false);
@@ -237,7 +237,7 @@ export default function DashboardTopBar({ onOpenSidebar }: DashboardTopBarProps)
                         {matchedCategories.map((category) => (
                           <li key={category._id}>
                             <Link
-                              href={`/transactions?categoryName=${encodeURIComponent(category.name)}`}
+                              href={`/transactions?q=${encodeURIComponent(category.name)}`}
                               role="option"
                               onClick={() => {
                                 setOpen(false);

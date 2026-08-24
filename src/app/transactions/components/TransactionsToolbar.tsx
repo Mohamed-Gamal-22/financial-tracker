@@ -10,8 +10,8 @@ export type CategoryTypeFilter = "all" | CategoryType;
 type TransactionsToolbarProps = {
   categoryType: CategoryTypeFilter;
   onCategoryTypeChange: (value: CategoryTypeFilter) => void;
-  categoryName: string;
-  onCategoryNameChange: (value: string) => void;
+  titleSearch: string;
+  onTitleSearchChange: (value: string) => void;
   month: string;
   onMonthChange: (value: string) => void;
 };
@@ -26,8 +26,8 @@ const TYPE_FILTERS: { id: CategoryTypeFilter; label: string }[] = [
 export default function TransactionsToolbar({
   categoryType,
   onCategoryTypeChange,
-  categoryName,
-  onCategoryNameChange,
+  titleSearch,
+  onTitleSearchChange,
   month,
   onMonthChange,
 }: TransactionsToolbarProps) {
@@ -72,9 +72,9 @@ export default function TransactionsToolbar({
         </div>
         <input
           type="search"
-          value={categoryName}
-          onChange={(event) => onCategoryNameChange(event.target.value)}
-          placeholder="بحث باسم التصنيف..."
+          value={titleSearch}
+          onChange={(event) => onTitleSearchChange(event.target.value)}
+          placeholder="بحث بالوصف..."
           className="w-full bg-input-bg border border-input-border rounded-full ps-10 pe-4 py-2.5 text-sm text-text-main placeholder-text-muted outline-none focus:border-input-focus focus:ring-2 focus:ring-primary/20 transition-all"
         />
       </div>

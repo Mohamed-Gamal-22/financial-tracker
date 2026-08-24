@@ -1,26 +1,57 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { getMonthlyBudgetByMonth } from "@/services/api/monthlyBudget";
 import { getTransactionSummary } from "@/services/api/transaction";
+import { ApiError } from "@/services/api/types";
 import { formatMoney, sumTotals } from "@/lib/format";
 
 export default function DashboardStats({ month }: { month: string }) {
-  const { data, isLoading, isError } = useQuery({
+  const {
+    data: summary,
+    isLoading: summaryLoading,
+    isError: summaryError,
+  } = useQuery({
     queryKey: ["transaction-summary", month],
     queryFn: async () => (await getTransactionSummary(month)).data,
   });
 
-  const income = sumTotals(data?.income);
-  const expense = sumTotals(data?.expense);
-  const savings = sumTotals(data?.savings);
-  /** إيراد − مصروف + ادخار */
-  const balance = income - expense + savings;
+  const {
+    data: budget,
+    isLoading: budgetLoading,
+  } = useQuery({
+    queryKey: ["monthly-budget", month],
+    queryFn: async () => {
+      try {
+        const response = await getMonthlyBudgetByMonth(month);
+        return response.data ?? null;
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 404) {
+          return null;
+        }
+        throw error;
+      }
+    },
+  });
+
+  const isLoading = summaryLoading || budgetLoading;
+  const isError = summaryError;
+
+  const income = sumTotals(summary?.income);
+  const expense = budget?.actualExpenses ?? sumTotals(summary?.expense);
+  const expenseCap = budget?.expenseAmount ?? 0;
+  const savingsCap = budget?.savingsAmount ?? 0;
+  const savings = budget?.actualSavings ?? sumTotals(summary?.savings);
+
+  /** إيراد − مصروف فعلي − ادخار مسجّل */
+  const balance = income - expense - savings;
 
   const stats = [
     {
       id: "income",
       label: "الإيرادات الشهرية",
       value: formatMoney(income),
+      subtitle: null as string | null,
       valueClass: "text-accent-success",
       iconBg: "bg-accent-success/10 text-accent-success",
       icon: (
@@ -32,7 +63,11 @@ export default function DashboardStats({ month }: { month: string }) {
     {
       id: "expenses",
       label: "المصروفات الشهرية",
-      value: formatMoney(expense),
+      value:
+        expenseCap > 0
+          ? `${formatMoney(expense)} من ${formatMoney(expenseCap)}`
+          : formatMoney(expense),
+      subtitle: expenseCap > 0 ? "سقف الميزانية" : "حدّد ميزانية لعرض السقف",
       valueClass: "text-accent-danger",
       iconBg: "bg-accent-danger/10 text-accent-danger",
       icon: (
@@ -44,7 +79,11 @@ export default function DashboardStats({ month }: { month: string }) {
     {
       id: "savings",
       label: "الادخار الشهري",
-      value: formatMoney(savings),
+      value:
+        savingsCap > 0
+          ? `${formatMoney(savings)} من ${formatMoney(savingsCap)}`
+          : formatMoney(savings),
+      subtitle: savingsCap > 0 ? "هدف الادخار في الميزانية" : "حدّد ميزانية لعرض الهدف",
       valueClass: "text-sky",
       iconBg: "bg-sky/15 text-sky",
       icon: (
@@ -61,6 +100,7 @@ export default function DashboardStats({ month }: { month: string }) {
       id: "balance",
       label: "إجمالي الرصيد",
       value: formatMoney(balance),
+      subtitle: "الإيراد − المصروف − الادخار",
       valueClass:
         balance < 0
           ? "text-accent-danger"
@@ -92,6 +132,11 @@ export default function DashboardStats({ month }: { month: string }) {
               <p className={`text-xl sm:text-2xl font-extrabold tracking-tight ${stat.valueClass}`}>
                 {isLoading ? "..." : isError ? "—" : stat.value}
               </p>
+              {stat.subtitle && !isLoading && !isError && (
+                <p className="mt-1.5 text-[11px] font-medium text-text-muted leading-relaxed">
+                  {stat.subtitle}
+                </p>
+              )}
             </div>
             <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${stat.iconBg}`}>
               {stat.icon}

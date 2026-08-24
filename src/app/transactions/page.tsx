@@ -4,16 +4,14 @@ import { Suspense, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 import AppSidebar from "@/components/AppSidebar";
-import {
-  getTransactionsCount,
-  listTransactions,
-} from "@/services/api/transaction";
+import { listTransactions } from "@/services/api/transaction";
 import { ApiError } from "@/services/api/types";
 import {
   isIsoDate,
   normalizeTxDate,
   yearMonthFromPeriod,
 } from "@/lib/date-value";
+import { matchesTransactionTitle } from "@/lib/transaction-search";
 import type { Transaction } from "@/schemas/transaction.schema";
 import TransactionsHeader from "./components/TransactionsHeader";
 import TransactionsToolbar, {
@@ -25,12 +23,11 @@ import DeleteTransactionDialog from "./components/DeleteTransactionDialog";
 import TransactionDetailModal from "./components/TransactionDetailModal";
 
 const LIMIT = 10;
-const DAY_FETCH_LIMIT = 100;
+const FETCH_LIMIT = 100;
 
-async function fetchAllMonthTransactions(params: {
+async function fetchTransactionsForFilters(params: {
   categoryType?: CategoryTypeFilter;
-  categoryName?: string;
-  month: string;
+  month?: string;
 }): Promise<Transaction[]> {
   const all: Transaction[] = [];
   let page = 1;
@@ -38,11 +35,10 @@ async function fetchAllMonthTransactions(params: {
   for (;;) {
     const response = await listTransactions({
       page,
-      limit: DAY_FETCH_LIMIT,
+      limit: FETCH_LIMIT,
       categoryType:
         params.categoryType === "all" ? undefined : params.categoryType,
-      categoryName: params.categoryName || undefined,
-      month: params.month,
+      month: params.month || undefined,
     });
     const chunk = response.data?.transactions ?? [];
     all.push(...chunk);
@@ -84,16 +80,17 @@ function TransactionsPageContent() {
   const [categoryType, setCategoryType] = useState<CategoryTypeFilter>("all");
   /** YYYY-MM (month) or YYYY-MM-DD (day). */
   const [period, setPeriod] = useState("");
-  const [categoryNameInput, setCategoryNameInput] = useState(initialQuery);
-  const [categoryName, setCategoryName] = useState(initialQuery);
+  const [titleSearchInput, setTitleSearchInput] = useState(initialQuery);
+  const [titleSearch, setTitleSearch] = useState(initialQuery);
 
   const dayFilter = isIsoDate(period) ? period : "";
   const monthFilter = yearMonthFromPeriod(period);
+  const clientFilterMode = Boolean(titleSearch.trim()) || Boolean(dayFilter);
 
   useEffect(() => {
     const next = (searchParams.get("q") ?? searchParams.get("categoryName") ?? "").trim();
-    setCategoryNameInput(next);
-    setCategoryName(next);
+    setTitleSearchInput(next);
+    setTitleSearch(next);
     setPage(1);
     if (searchParams.get("add") === "1") {
       setCreateOpen(true);
@@ -102,44 +99,51 @@ function TransactionsPageContent() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      const next = categoryNameInput.trim();
-      setCategoryName((prev) => {
+      const next = titleSearchInput.trim();
+      setTitleSearch((prev) => {
         if (prev !== next) setPage(1);
         return next;
       });
     }, 300);
     return () => clearTimeout(timer);
-  }, [categoryNameInput]);
+  }, [titleSearchInput]);
 
   const listFilters = {
     categoryType,
-    categoryName,
+    titleSearch,
     period,
   };
 
-  const dayQuery = useQuery({
-    queryKey: ["transactions-by-day", listFilters],
-    enabled: Boolean(dayFilter),
+  const filteredQuery = useQuery({
+    queryKey: ["transactions-filtered", listFilters],
+    enabled: clientFilterMode,
     queryFn: async () => {
-      const all = await fetchAllMonthTransactions({
+      const all = await fetchTransactionsForFilters({
         categoryType,
-        categoryName,
-        month: monthFilter,
+        month: monthFilter || undefined,
       });
-      return all.filter((tx) => normalizeTxDate(tx.date) === dayFilter);
+
+      return all.filter((tx) => {
+        if (titleSearch && !matchesTransactionTitle(tx.title, titleSearch)) {
+          return false;
+        }
+        if (dayFilter && normalizeTxDate(tx.date) !== dayFilter) {
+          return false;
+        }
+        return true;
+      });
     },
     placeholderData: (previous) => previous,
   });
 
   const monthQuery = useQuery({
-    queryKey: ["transactions", { page, limit: LIMIT, ...listFilters }],
-    enabled: !dayFilter,
+    queryKey: ["transactions", { page, limit: LIMIT, categoryType, period }],
+    enabled: !clientFilterMode,
     queryFn: async () => {
       const response = await listTransactions({
         page,
         limit: LIMIT,
         categoryType: categoryType === "all" ? undefined : categoryType,
-        categoryName: categoryName || undefined,
         month: monthFilter || undefined,
       });
       return (
@@ -156,26 +160,11 @@ function TransactionsPageContent() {
     placeholderData: (previous) => previous,
   });
 
-  const {
-    data: totalCount = 0,
-    isSuccess: countReady,
-  } = useQuery({
-    queryKey: ["transactions-count", listFilters],
-    enabled: !dayFilter,
-    queryFn: () =>
-      getTransactionsCount({
-        categoryType: categoryType === "all" ? undefined : categoryType,
-        categoryName: categoryName || undefined,
-        month: monthFilter || undefined,
-      }),
-    staleTime: 30_000,
-  });
-
   function afterCreate() {
     setPage(1);
   }
 
-  const activeQuery = dayFilter ? dayQuery : monthQuery;
+  const activeQuery = clientFilterMode ? filteredQuery : monthQuery;
   const { isLoading, isError, error, refetch, isFetching } = activeQuery;
 
   const errorMessage =
@@ -189,20 +178,22 @@ function TransactionsPageContent() {
   let total = 0;
   let hasMore = false;
 
-  if (dayFilter) {
-    const filtered = dayQuery.data ?? [];
+  if (clientFilterMode) {
+    const filtered = filteredQuery.data ?? [];
     total = filtered.length;
     const start = (page - 1) * LIMIT;
     transactions = filtered.slice(start, start + LIMIT);
     hasMore = page * LIMIT < total;
   } else {
     transactions = monthQuery.data?.transactions ?? [];
-    total = countReady ? totalCount : (monthQuery.data?.total ?? 0);
+    total = monthQuery.data?.total ?? 0;
     const totalPages = Math.max(1, Math.ceil(total / LIMIT) || 1);
-    hasMore = countReady
-      ? page < totalPages
-      : (monthQuery.data?.hasMore ??
-        page * LIMIT < Math.max(total, page * LIMIT));
+    hasMore =
+      monthQuery.data?.hasMore ??
+      page * LIMIT < Math.max(total, page * LIMIT);
+    if (total > 0) {
+      hasMore = page < totalPages;
+    }
   }
 
   return (
@@ -229,8 +220,8 @@ function TransactionsPageContent() {
               setCategoryType(value);
               setPage(1);
             }}
-            categoryName={categoryNameInput}
-            onCategoryNameChange={setCategoryNameInput}
+            titleSearch={titleSearchInput}
+            onTitleSearchChange={setTitleSearchInput}
             month={period}
             onMonthChange={(value) => {
               setPeriod(value);
