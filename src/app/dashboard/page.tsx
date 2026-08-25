@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import AppSidebar from "@/components/AppSidebar";
 import OnboardingFlowModal, {
   type OnboardingStep,
@@ -11,9 +12,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { yearMonthFromPeriod } from "@/lib/date-value";
 import { currentYearMonth } from "@/lib/format";
 import {
+  hasMonthFinancialActivity,
   isOnboardingFlowDismissed,
   markOnboardingFlowDismissed,
 } from "@/lib/onboarding-flow";
+import { getTransactionSummary } from "@/services/api/transaction";
 import CreateTransactionModal from "@/app/transactions/components/CreateTransactionModal";
 import DashboardTopBar from "./components/DashboardTopBar";
 import DashboardStats from "./components/DashboardStats";
@@ -32,14 +35,58 @@ export default function DashboardPage() {
   const [flowOpen, setFlowOpen] = useState(false);
   const [flowStep, setFlowStep] = useState<OnboardingStep>(1);
   const [incomeOpen, setIncomeOpen] = useState(false);
+  const flowDecisionMade = useRef(false);
+
+  const calendarMonth = currentYearMonth();
+  const needsServerCheck =
+    Boolean(userKey) && !isOnboardingFlowDismissed(userKey, calendarMonth);
+
+  const {
+    data: monthSummary,
+    isPending: summaryPending,
+    isFetched: summaryFetched,
+    isError: summaryError,
+  } = useQuery({
+    queryKey: ["transaction-summary", calendarMonth],
+    queryFn: async () => (await getTransactionSummary(calendarMonth)).data,
+    enabled: needsServerCheck,
+  });
 
   useEffect(() => {
-    const calendarMonth = currentYearMonth();
-    if (!isOnboardingFlowDismissed(userKey, calendarMonth)) {
-      setFlowOpen(true);
-      setFlowStep(1);
-    }
+    flowDecisionMade.current = false;
   }, [userKey]);
+
+  useEffect(() => {
+    if (flowDecisionMade.current || !userKey) return;
+
+    const monthKey = currentYearMonth();
+    if (isOnboardingFlowDismissed(userKey, monthKey)) {
+      flowDecisionMade.current = true;
+      setFlowOpen(false);
+      return;
+    }
+
+    // Wait for summary so the modal does not flash then hide.
+    if (summaryPending) return;
+    if (!summaryFetched && !summaryError) return;
+
+    flowDecisionMade.current = true;
+
+    if (!summaryError && hasMonthFinancialActivity(monthSummary)) {
+      markOnboardingFlowDismissed(userKey, monthKey);
+      setFlowOpen(false);
+      return;
+    }
+
+    setFlowOpen(true);
+    setFlowStep(1);
+  }, [
+    userKey,
+    summaryPending,
+    summaryFetched,
+    summaryError,
+    monthSummary,
+  ]);
 
   const dismissFlow = useCallback(() => {
     markOnboardingFlowDismissed(userKey, currentYearMonth());

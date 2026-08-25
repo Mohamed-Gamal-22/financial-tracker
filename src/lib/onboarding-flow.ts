@@ -1,3 +1,6 @@
+import { sumTotals } from "@/lib/format";
+import type { TransactionSummaryData } from "@/schemas/transaction.schema";
+
 const STORAGE_PREFIX = "masrofy:onboarding-flow:";
 
 function storageKey(userKey?: string | null) {
@@ -30,4 +33,17 @@ export function markOnboardingFlowDismissed(
   } catch {
     // ignore quota / private mode
   }
+}
+
+/** True when the month summary has any income, expense, or savings amount. */
+export function hasMonthFinancialActivity(
+  summary?: TransactionSummaryData | null,
+): boolean {
+  if (!summary) return false;
+  return (
+    sumTotals(summary.income) +
+      sumTotals(summary.expense) +
+      sumTotals(summary.savings) >
+    0
+  );
 }
