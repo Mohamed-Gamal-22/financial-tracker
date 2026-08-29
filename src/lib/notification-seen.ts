@@ -4,7 +4,8 @@ const STORAGE_PREFIX = "masrofy:notification-seen:";
 export const NOTIFICATION_SEEN_CHANGE_EVENT = "masrofy:notification-seen-changed";
 
 function storageKey(userKey?: string | null) {
-  return `${STORAGE_PREFIX}${userKey?.trim() || "guest"}`;
+  const normalized = userKey?.toLowerCase().trim();
+  return `${STORAGE_PREFIX}${normalized || "guest"}`;
 }
 
 function emitSeenChange() {

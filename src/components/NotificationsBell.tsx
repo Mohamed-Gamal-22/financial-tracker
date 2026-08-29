@@ -36,27 +36,32 @@ function NotificationsPanel({
       role="dialog"
       aria-label="قائمة الإشعارات"
       data-notifications-panel
-      className={className}
+      className={`flex flex-col ${className}`}
     >
-      <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-card-border">
+      <div className="shrink-0 px-4 py-3 border-b border-card-border">
         <p className="text-sm font-extrabold text-text-main">الإشعارات</p>
+      </div>
+
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <NotificationsList
+          items={items}
+          seenIds={seenIds}
+          isLoading={isLoading}
+          isError={isError}
+          compact
+          onItemClick={onItemClick}
+        />
+      </div>
+
+      <div className="shrink-0 border-t border-card-border bg-surface">
         <Link
           href="/notifications"
           onClick={onViewAll}
-          className="text-xs font-bold text-primary hover:text-primary-hover transition-colors"
+          className="flex items-center justify-center w-full px-4 py-2.5 text-xs font-bold text-primary hover:bg-primary-tint/40 transition-colors"
         >
           عرض الكل
         </Link>
       </div>
-
-      <NotificationsList
-        items={items}
-        seenIds={seenIds}
-        isLoading={isLoading}
-        isError={isError}
-        compact
-        onItemClick={onItemClick}
-      />
     </div>
   );
 }

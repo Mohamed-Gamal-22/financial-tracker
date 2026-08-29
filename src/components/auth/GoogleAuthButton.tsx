@@ -16,6 +16,7 @@ type GoogleAuthButtonProps = {
   /** `continue` → POST /auth/gmail | `login` → POST /auth/login/gmail */
   mode: GoogleAuthMode;
   callbackUrl?: string;
+  label?: string;
 };
 
 const NEXTAUTH_GENERIC_ERRORS = new Set([
@@ -102,6 +103,7 @@ function disableGoogleAutoSelect() {
 export default function GoogleAuthButton({
   mode,
   callbackUrl = "/dashboard",
+  label: customLabel,
 }: GoogleAuthButtonProps) {
   const router = useRouter();
   const { showAlert } = useAlert();
@@ -111,9 +113,10 @@ export default function GoogleAuthButton({
   const [buttonWidth, setButtonWidth] = useState(320);
 
   const label =
-    mode === "login"
-      ? "تسجيل الدخول باستخدام الـ Gmail"
-      : "انشاء حساب باستخدام الـ Gmail";
+    customLabel ??
+    (mode === "login"
+      ? "تسجيل الدخول بالـ Gmail"
+      : "إنشاء حساب بالـ Gmail");
 
   useEffect(() => {
     disableGoogleAutoSelect();
@@ -206,8 +209,8 @@ export default function GoogleAuthButton({
           aria-hidden
           className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center gap-3 border border-input-border rounded-xl bg-input-bg text-sm font-bold text-text-main"
         >
-          <GoogleGlyph />
           <span>{label}</span>
+          <GoogleGlyph />
         </div>
 
         <div

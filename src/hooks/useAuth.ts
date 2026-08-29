@@ -1,6 +1,7 @@
 "use client";
 
 import { signOut, useSession } from "next-auth/react";
+import { useQueryClient } from "@tanstack/react-query";
 import { clearLegacyAuthStorage } from "@/services/auth/session-utils";
 import { logoutUser, type LogoutFlag } from "@/services/api/user";
 
@@ -13,6 +14,7 @@ type LogoutOptions = {
 
 export function useAuth() {
   const { data: session, status, update } = useSession();
+  const queryClient = useQueryClient();
 
   const user = session?.user?.email
     ? {
@@ -37,6 +39,7 @@ export function useAuth() {
       // Always clear the local session even if the API call fails.
     }
 
+    queryClient.clear();
     clearLegacyAuthStorage();
     await signOut({ callbackUrl });
   }

@@ -3,9 +3,7 @@
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
-import { useNotifications } from "@/hooks/useNotifications";
 import { useUserProfile } from "@/hooks/useUserProfile";
-import UnreadCountBadge from "@/components/UnreadCountBadge";
 import UserAvatar from "@/components/UserAvatar";
 
 export type SidebarItemId =
@@ -70,16 +68,6 @@ const NAV_ITEMS: {
       </svg>
     ),
   },
-  {
-    id: "alerts",
-    label: "التنبيهات",
-    href: "/notifications",
-    icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-      </svg>
-    ),
-  },
 ];
 
 const COMING_SOON_ANALYSIS_ICON = (
@@ -101,7 +89,6 @@ export default function AppSidebar({
 }: AppSidebarProps) {
   const { logout } = useAuth();
   const { displayName, profilePic } = useUserProfile();
-  const { unreadCount } = useNotifications();
   const [loggingOut, setLoggingOut] = useState(false);
   const profileActive = activeItem === "profile";
 
@@ -146,7 +133,6 @@ export default function AppSidebar({
         <nav className="shrink-0 px-4 pb-3 space-y-1">
           {NAV_ITEMS.map((item) => {
             const active = activeItem === item.id;
-            const isAlerts = item.id === "alerts";
             const highlighted = highlightItem === item.id;
             return (
               <Link
@@ -156,11 +142,6 @@ export default function AppSidebar({
                   if (highlighted) onHighlightClick?.();
                   onCloseMobile?.();
                 }}
-                aria-label={
-                  isAlerts && unreadCount > 0
-                    ? `التنبيهات، ${unreadCount} غير مقروءة`
-                    : undefined
-                }
                 className={[
                   "flex items-center gap-3 rounded-xl border px-3.5 py-2.5 text-sm font-bold transition-colors",
                   highlighted
@@ -177,7 +158,6 @@ export default function AppSidebar({
                   ].join(" ")}
                 >
                   {item.icon}
-                  {isAlerts && <UnreadCountBadge count={unreadCount} />}
                 </span>
                 {item.label}
               </Link>

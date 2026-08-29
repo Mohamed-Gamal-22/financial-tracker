@@ -6,12 +6,14 @@ import type { GoogleAuthMode } from "@/schemas/auth.schema";
 type AuthDividerWithGoogleProps = {
   mode: GoogleAuthMode;
   callbackUrl?: string;
+  label?: string;
 };
 
 /** Shared "أو" divider + Google auth button for login / register forms. */
 export default function AuthDividerWithGoogle({
   mode,
   callbackUrl,
+  label,
 }: AuthDividerWithGoogleProps) {
   return (
     <div className="space-y-4 mt-5">
@@ -22,7 +24,7 @@ export default function AuthDividerWithGoogle({
         </span>
         <div className="h-px flex-1 bg-input-border" />
       </div>
-      <GoogleAuthButton mode={mode} callbackUrl={callbackUrl} />
+      <GoogleAuthButton mode={mode} callbackUrl={callbackUrl} label={label} />
     </div>
   );
 }

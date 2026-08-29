@@ -27,7 +27,7 @@ import BudgetAlerts from "./components/BudgetAlerts";
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, status } = useAuth();
   const userKey = user?.id || user?.email || null;
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -38,8 +38,9 @@ export default function DashboardPage() {
   const flowDecisionMade = useRef(false);
 
   const calendarMonth = currentYearMonth();
+  const isAuthReady = status === "authenticated" && Boolean(userKey);
   const needsServerCheck =
-    Boolean(userKey) && !isOnboardingFlowDismissed(userKey, calendarMonth);
+    isAuthReady && !isOnboardingFlowDismissed(userKey, calendarMonth);
 
   const {
     data: monthSummary,
@@ -47,7 +48,7 @@ export default function DashboardPage() {
     isFetched: summaryFetched,
     isError: summaryError,
   } = useQuery({
-    queryKey: ["transaction-summary", calendarMonth],
+    queryKey: ["transaction-summary", userKey, calendarMonth],
     queryFn: async () => (await getTransactionSummary(calendarMonth)).data,
     enabled: needsServerCheck,
   });
@@ -57,7 +58,9 @@ export default function DashboardPage() {
   }, [userKey]);
 
   useEffect(() => {
-    if (flowDecisionMade.current || !userKey) return;
+    if (status === "loading" || !isAuthReady || !userKey || flowDecisionMade.current) {
+      return;
+    }
 
     const monthKey = currentYearMonth();
     if (isOnboardingFlowDismissed(userKey, monthKey)) {
@@ -81,6 +84,8 @@ export default function DashboardPage() {
     setFlowOpen(true);
     setFlowStep(1);
   }, [
+    isAuthReady,
+    status,
     userKey,
     summaryPending,
     summaryFetched,
@@ -95,13 +100,32 @@ export default function DashboardPage() {
     setSidebarOpen(false);
   }, [userKey]);
 
+  const goToStep1 = useCallback(() => {
+    setIncomeOpen(false);
+    setFlowStep(1);
+    setFlowOpen(true);
+  }, []);
+
   const goToStep2 = useCallback(() => {
     setIncomeOpen(false);
     setFlowStep(2);
     setFlowOpen(true);
   }, []);
 
-  const highlightingTransactions = flowOpen && flowStep === 2;
+  const goToStep3 = useCallback(() => {
+    setIncomeOpen(false);
+    setFlowStep(3);
+    setFlowOpen(true);
+  }, []);
+
+  const sidebarHighlight =
+    flowOpen && !incomeOpen
+      ? flowStep === 2
+        ? "budget"
+        : flowStep === 3
+          ? "transactions"
+          : undefined
+      : undefined;
 
   return (
     <div className="min-h-screen flex relative text-text-main overflow-x-hidden font-sans bg-gradient-to-br from-bg-start to-bg-end">
@@ -112,7 +136,7 @@ export default function DashboardPage() {
         activeItem="home"
         mobileOpen={sidebarOpen}
         onCloseMobile={() => setSidebarOpen(false)}
-        highlightItem={highlightingTransactions ? "transactions" : undefined}
+        highlightItem={sidebarHighlight}
         onHighlightClick={dismissFlow}
       />
 
@@ -151,7 +175,12 @@ export default function DashboardPage() {
         open={flowOpen && !incomeOpen}
         step={flowStep}
         onAddIncome={() => setIncomeOpen(true)}
-        onNextStep={goToStep2}
+        onNextStep={flowStep === 1 ? goToStep2 : goToStep3}
+        onPrevStep={flowStep === 3 ? goToStep2 : goToStep1}
+        onGoToBudget={() => {
+          dismissFlow();
+          router.push("/budget");
+        }}
         onGoToTransactions={() => {
           dismissFlow();
           router.push("/transactions?add=1");

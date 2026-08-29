@@ -68,7 +68,7 @@ function pickLocalizedText(
   return undefined;
 }
 
-function normalizeNotificationItem(raw: unknown): NotificationItem | null {
+export function normalizeNotificationItem(raw: unknown): NotificationItem | null {
   const row = asRecord(raw);
   if (!row) return null;
   const id = readId(row._id) ?? readId(row.id);
@@ -104,7 +104,7 @@ function normalizeNotificationItem(raw: unknown): NotificationItem | null {
   };
 }
 
-function normalizeNotifications(data: unknown): NotificationItem[] {
+export function normalizeNotifications(data: unknown): NotificationItem[] {
   let list: unknown[] = [];
 
   if (Array.isArray(data)) {

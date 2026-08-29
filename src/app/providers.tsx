@@ -1,11 +1,29 @@
 "use client";
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { SessionProvider } from "next-auth/react";
+import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
+import { SessionProvider, useSession } from "next-auth/react";
 import { GoogleOAuthProvider } from "@react-oauth/google";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AlertProvider } from "@/app/(auth)/alerts";
 import TokenRefreshWatcher from "@/components/auth/TokenRefreshWatcher";
+
+function UserSessionQuerySync() {
+  const { data: session, status } = useSession();
+  const queryClient = useQueryClient();
+  const currentUserRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (status === "loading") return;
+
+    const currentEmail = session?.user?.email?.toLowerCase().trim() ?? null;
+    if (currentUserRef.current !== null && currentUserRef.current !== currentEmail) {
+      queryClient.clear();
+    }
+    currentUserRef.current = currentEmail;
+  }, [session?.user?.email, status, queryClient]);
+
+  return null;
+}
 
 function GoogleProvider({ children }: { children: React.ReactNode }) {
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID?.trim() ?? "";
@@ -37,6 +55,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider refetchInterval={4 * 60} refetchOnWindowFocus>
       <QueryClientProvider client={queryClient}>
+        <UserSessionQuerySync />
         <GoogleProvider>
           <AlertProvider>
             <TokenRefreshWatcher />

@@ -202,7 +202,11 @@ export default function LoginForm() {
       </button>
       </form>
 
-      <AuthDividerWithGoogle mode="continue" callbackUrl={callbackUrl} />
+      <AuthDividerWithGoogle
+        mode="continue"
+        callbackUrl={callbackUrl}
+        label="تسجيل الدخول بالـ Gmail"
+      />
     </div>
   );
 }

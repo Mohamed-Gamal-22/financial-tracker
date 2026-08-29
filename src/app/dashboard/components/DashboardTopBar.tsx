@@ -129,7 +129,7 @@ export default function DashboardTopBar({ onOpenSidebar }: DashboardTopBarProps)
   }, []);
 
   return (
-    <header className="flex flex-wrap items-center gap-3 sm:gap-4 rounded-2xl border border-card-border bg-surface/90 backdrop-blur-sm px-4 py-3 shadow-sm">
+    <header className="relative z-30 flex flex-wrap items-center gap-3 sm:gap-4 rounded-2xl border border-card-border bg-surface/90 backdrop-blur-sm px-4 py-3 shadow-sm">
       <div className="flex items-center gap-2">
         {onOpenSidebar && (
           <button

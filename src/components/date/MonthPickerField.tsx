@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { DayPicker } from "react-day-picker";
 import { arEG } from "react-day-picker/locale";
 import { format, setMonth, setYear } from "date-fns";
@@ -54,7 +55,12 @@ export default function MonthPickerField({
   const panelId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [mode, setMode] = useState<PickerMode>("month");
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const selectedDay = monthOnly ? undefined : parseIsoDate(value);
   const selectedMonth =
@@ -77,9 +83,16 @@ export default function MonthPickerField({
   useEffect(() => {
     if (!open) return;
     const onPointerDown = (event: MouseEvent) => {
-      if (!rootRef.current?.contains(event.target as Node)) {
-        setOpen(false);
+      const target = event.target as Node | null;
+      if (!target) return;
+      if (rootRef.current?.contains(target)) return;
+      if (
+        target instanceof Element &&
+        target.closest("[data-month-picker-panel]")
+      ) {
+        return;
       }
+      setOpen(false);
     };
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") setOpen(false);
@@ -121,241 +134,276 @@ export default function MonthPickerField({
     setOpen(false);
   }
 
-  return (
-    <div ref={rootRef} className={`relative ${className ?? ""}`}>
-      <button
-        id={id}
-        type="button"
-        disabled={disabled}
-        aria-haspopup="dialog"
-        aria-expanded={open}
-        aria-controls={panelId}
-        onClick={() =>
-          setOpen((prev) => {
-            if (!prev) {
-              setMode(
-                monthOnly ? "month" : isIsoDate(value) ? "days" : "month",
-              );
-            }
-            return !prev;
-          })
-        }
-        className={
-          compact
-            ? `${compactTriggerClass} disabled:opacity-60`
-            : `${triggerClass} disabled:opacity-60`
-        }
-      >
-        {compact && compactLabel ? (
-          <span className="text-text-muted font-medium text-xs">{compactLabel}</span>
-        ) : null}
-        <span
-          className={
-            selectedDay || selectedMonth
-              ? "font-bold text-text-main"
-              : compact
-                ? "font-bold text-text-muted"
-                : "font-medium text-text-muted"
-          }
+  const panelContent = (
+    panelElementId: string | undefined,
+    containerClassName: string,
+  ) => (
+    <div
+      id={panelElementId}
+      role="dialog"
+      data-month-picker-panel
+      aria-label={monthOnly ? "اختيار الشهر" : "اختيار الشهر أو اليوم"}
+      className={containerClassName}
+    >
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <p className="text-xs font-extrabold text-text-muted">
+          {monthOnly ? "اختيار الشهر" : "اختيار التاريخ"}
+        </p>
+        <button
+          type="button"
+          aria-label="إغلاق"
+          onClick={() => setOpen(false)}
+          className="flex size-8 shrink-0 items-center justify-center rounded-xl border border-card-border bg-surface text-text-muted hover:bg-primary-tint/50 hover:text-text-main transition-colors cursor-pointer"
         >
-          {displayLabel}
-        </span>
-        <span className="flex items-center gap-1.5 shrink-0">
-          {allowClear && value && (
-            <span
-              role="button"
-              tabIndex={0}
-              aria-label="مسح التاريخ"
-              className="text-xs font-bold text-primary hover:text-primary-hover"
-              onClick={(event) => {
-                event.stopPropagation();
-                onChange("");
-              }}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" || event.key === " ") {
-                  event.preventDefault();
-                  event.stopPropagation();
-                  onChange("");
-                }
-              }}
-            >
-              مسح
-            </span>
-          )}
-          {!compact && (
-            <svg
-              className="w-4 h-4 text-text-muted"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth="2"
-              aria-hidden
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-              />
-            </svg>
-          )}
-        </span>
-      </button>
-
-      {open && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 sm:static sm:inset-auto sm:z-50 sm:block sm:p-0">
-          <button
-            type="button"
-            aria-label="إغلاق"
-            className="absolute inset-0 bg-text-main/40 backdrop-blur-[2px] cursor-pointer sm:hidden"
-            onClick={() => setOpen(false)}
-          />
-          <div
-            id={panelId}
-            role="dialog"
-            aria-label={monthOnly ? "اختيار الشهر" : "اختيار الشهر أو اليوم"}
-            className="relative z-10 w-full max-w-[17rem] rounded-2xl border border-card-border bg-surface shadow-xl p-3 sm:absolute sm:end-0 sm:mt-2 sm:w-auto sm:min-w-[17rem] sm:max-w-none"
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            aria-hidden
           >
-            <div className="mb-2 flex items-center justify-between gap-2">
-              <p className="text-xs font-extrabold text-text-muted">
-                {monthOnly ? "اختيار الشهر" : "اختيار التاريخ"}
-              </p>
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </button>
+      </div>
+
+      {!monthOnly && (
+        <div className="mb-3 grid grid-cols-2 gap-1 rounded-xl bg-primary-tint/50 p-1">
+          {(
+            [
+              { id: "month", label: "شهر فقط" },
+              { id: "days", label: "بالأيام" },
+            ] as const
+          ).map((tab) => {
+            const active = mode === tab.id;
+            return (
               <button
+                key={tab.id}
                 type="button"
-                aria-label="إغلاق"
-                onClick={() => setOpen(false)}
-                className="flex size-8 shrink-0 items-center justify-center rounded-xl border border-card-border bg-surface text-text-muted hover:bg-primary-tint/50 hover:text-text-main transition-colors cursor-pointer"
+                onClick={() => setMode(tab.id)}
+                className={[
+                  "rounded-lg px-2 py-1.5 text-xs font-extrabold transition-colors cursor-pointer",
+                  active
+                    ? "bg-surface text-primary shadow-sm"
+                    : "text-text-muted hover:text-text-main",
+                ].join(" ")}
               >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2" aria-hidden>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                {tab.label}
               </button>
-            </div>
-
-          {!monthOnly && (
-            <div className="mb-3 grid grid-cols-2 gap-1 rounded-xl bg-primary-tint/50 p-1">
-              {(
-                [
-                  { id: "month", label: "شهر فقط" },
-                  { id: "days", label: "بالأيام" },
-                ] as const
-              ).map((tab) => {
-                const active = mode === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => setMode(tab.id)}
-                    className={[
-                      "rounded-lg px-2 py-1.5 text-xs font-extrabold transition-colors cursor-pointer",
-                      active
-                        ? "bg-surface text-primary shadow-sm"
-                        : "text-text-muted hover:text-text-main",
-                    ].join(" ")}
-                  >
-                    {tab.label}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
-          {monthOnly || mode === "month" ? (
-            <>
-              <div className="flex items-center justify-between gap-2 mb-3">
-                <button
-                  type="button"
-                  aria-label="السنة السابقة"
-                  onClick={() => setViewYear((year) => year - 1)}
-                  className="size-8 rounded-xl border border-card-border bg-surface hover:bg-primary-tint/50 text-text-main cursor-pointer"
-                >
-                  ‹
-                </button>
-                <p className="text-sm font-extrabold text-text-main tabular-nums">
-                  {format(setYear(new Date(), viewYear), "yyyy", {
-                    locale: arEG,
-                  })}
-                </p>
-                <button
-                  type="button"
-                  aria-label="السنة التالية"
-                  onClick={() => setViewYear((year) => year + 1)}
-                  className="size-8 rounded-xl border border-card-border bg-surface hover:bg-primary-tint/50 text-text-main cursor-pointer"
-                >
-                  ›
-                </button>
-              </div>
-
-              <div className="grid grid-cols-3 gap-2">
-                {months.map((monthItem) => {
-                  const active = selectedYearMonth === monthItem.value && !selectedDay;
-                  const isCurrent =
-                    toYearMonth(new Date()) === monthItem.value && !active;
-                  return (
-                    <button
-                      key={monthItem.value}
-                      type="button"
-                      onClick={() => commit(monthItem.value)}
-                      className={[
-                        "rounded-xl px-2 py-2.5 text-xs font-bold transition-colors cursor-pointer",
-                        active
-                          ? "bg-primary text-text-inverse shadow-sm shadow-primary/20"
-                          : isCurrent
-                            ? "border border-primary/40 text-primary bg-primary-tint/40 hover:bg-primary-tint"
-                            : "border border-card-border bg-surface text-text-main hover:bg-primary-tint/50",
-                      ].join(" ")}
-                    >
-                      {monthItem.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </>
-          ) : (
-            <>
-              <p className="mb-2 text-xs font-bold text-text-muted text-start">
-                اختار يومًا للفلترة عليه، أو أكّد الشهر المعروض من الزر تحت
-              </p>
-              <DayPicker
-                mode="single"
-                month={viewMonth}
-                onMonthChange={setViewMonth}
-                selected={selectedDay}
-                modifiers={{
-                  selectedMonth: (date) =>
-                    Boolean(selectedYearMonth) &&
-                    toYearMonth(date) === selectedYearMonth &&
-                    !selectedDay,
-                }}
-                modifiersClassNames={{
-                  selectedMonth: "rdp-selected",
-                }}
-                onSelect={(date) => {
-                  if (!date) return;
-                  commit(toIsoDate(date));
-                }}
-                {...masrofyDayPickerProps}
-              />
-              <button
-                type="button"
-                onClick={() => commit(toYearMonth(viewMonth))}
-                className="mt-2 w-full rounded-xl bg-primary hover:bg-primary-hover text-text-inverse px-3 py-2 text-xs font-bold cursor-pointer"
-              >
-                اختيار شهر{" "}
-                {format(viewMonth, "MMMM yyyy", { locale: arEG })}
-              </button>
-            </>
-          )}
-
-          <button
-            type="button"
-            onClick={() => commit(toYearMonth(new Date()))}
-            className="mt-2 w-full rounded-xl border border-card-border bg-surface px-3 py-2 text-xs font-bold text-primary hover:bg-primary-tint/40 cursor-pointer"
-          >
-            الشهر الحالي
-          </button>
-          </div>
+            );
+          })}
         </div>
       )}
+
+      {monthOnly || mode === "month" ? (
+        <>
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <button
+              type="button"
+              aria-label="السنة السابقة"
+              onClick={() => setViewYear((year) => year - 1)}
+              className="size-8 rounded-xl border border-card-border bg-surface hover:bg-primary-tint/50 text-text-main cursor-pointer"
+            >
+              ‹
+            </button>
+            <p className="text-sm font-extrabold text-text-main tabular-nums">
+              {format(setYear(new Date(), viewYear), "yyyy", {
+                locale: arEG,
+              })}
+            </p>
+            <button
+              type="button"
+              aria-label="السنة التالية"
+              onClick={() => setViewYear((year) => year + 1)}
+              className="size-8 rounded-xl border border-card-border bg-surface hover:bg-primary-tint/50 text-text-main cursor-pointer"
+            >
+              ›
+            </button>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2">
+            {months.map((monthItem) => {
+              const active =
+                selectedYearMonth === monthItem.value && !selectedDay;
+              const isCurrent =
+                toYearMonth(new Date()) === monthItem.value && !active;
+              return (
+                <button
+                  key={monthItem.value}
+                  type="button"
+                  onClick={() => commit(monthItem.value)}
+                  className={[
+                    "rounded-xl px-2 py-2.5 text-xs font-bold transition-colors cursor-pointer",
+                    active
+                      ? "bg-primary text-text-inverse shadow-sm shadow-primary/20"
+                      : isCurrent
+                        ? "border border-primary/40 text-primary bg-primary-tint/40 hover:bg-primary-tint"
+                        : "border border-card-border bg-surface text-text-main hover:bg-primary-tint/50",
+                  ].join(" ")}
+                >
+                  {monthItem.label}
+                </button>
+              );
+            })}
+          </div>
+        </>
+      ) : (
+        <>
+          <p className="mb-2 text-xs font-bold text-text-muted text-start">
+            اختار يومًا للفلترة عليه، أو أكّد الشهر المعروض من الزر تحت
+          </p>
+          <DayPicker
+            mode="single"
+            month={viewMonth}
+            onMonthChange={setViewMonth}
+            selected={selectedDay}
+            modifiers={{
+              selectedMonth: (date) =>
+                Boolean(selectedYearMonth) &&
+                toYearMonth(date) === selectedYearMonth &&
+                !selectedDay,
+            }}
+            modifiersClassNames={{
+              selectedMonth: "rdp-selected",
+            }}
+            onSelect={(date) => {
+              if (!date) return;
+              commit(toIsoDate(date));
+            }}
+            {...masrofyDayPickerProps}
+          />
+          <button
+            type="button"
+            onClick={() => commit(toYearMonth(viewMonth))}
+            className="mt-2 w-full rounded-xl bg-primary hover:bg-primary-hover text-text-inverse px-3 py-2 text-xs font-bold cursor-pointer"
+          >
+            اختيار شهر{" "}
+            {format(viewMonth, "MMMM yyyy", { locale: arEG })}
+          </button>
+        </>
+      )}
+
+      <button
+        type="button"
+        onClick={() => commit(toYearMonth(new Date()))}
+        className="mt-2 w-full rounded-xl border border-card-border bg-surface px-3 py-2 text-xs font-bold text-primary hover:bg-primary-tint/40 cursor-pointer"
+      >
+        الشهر الحالي
+      </button>
     </div>
   );
+
+  return (
+    <>
+      <div ref={rootRef} className={`relative ${className ?? ""}`}>
+        <button
+          id={id}
+          type="button"
+          disabled={disabled}
+          aria-haspopup="dialog"
+          aria-expanded={open}
+          aria-controls={panelId}
+          onClick={() =>
+            setOpen((prev) => {
+              if (!prev) {
+                setMode(
+                  monthOnly ? "month" : isIsoDate(value) ? "days" : "month",
+                );
+              }
+              return !prev;
+            })
+          }
+          className={
+            compact
+              ? `${compactTriggerClass} disabled:opacity-60`
+              : `${triggerClass} disabled:opacity-60`
+          }
+        >
+          {compact && compactLabel ? (
+            <span className="text-text-muted font-medium text-xs">{compactLabel}</span>
+          ) : null}
+          <span
+            className={
+              selectedDay || selectedMonth
+                ? "font-bold text-text-main"
+                : compact
+                  ? "font-bold text-text-muted"
+                  : "font-medium text-text-muted"
+            }
+          >
+            {displayLabel}
+          </span>
+          <span className="flex items-center gap-1.5 shrink-0">
+            {allowClear && value && (
+              <span
+                role="button"
+                tabIndex={0}
+                aria-label="مسح التاريخ"
+                className="text-xs font-bold text-primary hover:text-primary-hover"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onChange("");
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    onChange("");
+                  }
+                }}
+              >
+                مسح
+              </span>
+            )}
+            {!compact && (
+              <svg
+                className="w-4 h-4 text-text-muted"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="2"
+                aria-hidden
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
+              </svg>
+            )}
+          </span>
+        </button>
+
+        {open &&
+          panelContent(
+            panelId,
+            "hidden sm:block absolute end-0 top-full mt-2 z-50 w-auto min-w-[17rem] rounded-2xl border border-card-border bg-surface shadow-xl p-3",
+          )}
+      </div>
+
+      {open &&
+        mounted &&
+        createPortal(
+          <div className="fixed inset-0 z-100 flex items-center justify-center p-4 sm:hidden">
+            <button
+              type="button"
+              aria-label="إغلاق"
+              className="absolute inset-0 bg-text-main/40 backdrop-blur-[2px] cursor-pointer"
+              onClick={() => setOpen(false)}
+            />
+            {panelContent(
+              undefined,
+              "relative z-10 w-full max-w-[18rem] rounded-2xl border border-card-border bg-surface shadow-2xl p-3",
+            )}
+          </div>,
+          document.body,
+        )}
+    </>
+  );
 }
+
